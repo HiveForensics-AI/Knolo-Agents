@@ -1,0 +1,1 @@
+{"version":1,"description":"A deterministic two-node in-memory execution fixture.","expected_event_kinds":["execution_started","node_started","state_patched","checkpointed","node_started","terminated"]}
