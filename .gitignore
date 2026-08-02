@@ -30,3 +30,7 @@ generated/
 !.env.example
 *.pem
 *.key
+
+# Package dry-runs and archives
+*.crate
+*.tgz

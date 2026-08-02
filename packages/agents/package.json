@@ -28,5 +28,20 @@
     "dist/**",
     "README.md",
     "LICENSE"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/knolo-ai/knolo-agents.git",
+    "directory": "packages/agents"
+  },
+  "homepage": "https://github.com/knolo-ai/knolo-agents#readme",
+  "bugs": {
+    "url": "https://github.com/knolo-ai/knolo-agents/issues"
+  },
+  "keywords": [
+    "knolo",
+    "agents",
+    "ai",
+    "typescript"
   ]
 }

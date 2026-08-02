@@ -1,0 +1,11 @@
+version: 1
+id: examples.basic
+authority:
+  capabilities: [state.read, state.write]
+  namespaces: [examples.basic]
+budget:
+  max_steps: 4
+  max_calls: 1
+  max_units: 10
+  max_duration_ms: 1000
+  max_cost_micros: 100

@@ -1,0 +1,12 @@
+name: Bug report
+description: Report a reproducible Knolo Agents defect
+title: "[Bug]: "
+body:
+  - type: textarea
+    id: reproduction
+    attributes: { label: Reproduction, description: Include versions and a minimal deterministic example. }
+    validations: { required: true }
+  - type: textarea
+    id: expected
+    attributes: { label: Expected behavior }
+    validations: { required: true }
