@@ -30,7 +30,7 @@ jobs:
             format-lint) pnpm --filter @knolo/agents check ;;
             unit) pnpm --filter @knolo/agents test ;;
             conformance) pnpm --filter @knolo/agents test ;;
-            package) pnpm --filter @knolo/agents pack --pack-destination /tmp && tar -tf /tmp/knolo-agents-*.tgz ;;
+            package) cd packages/agents && npm pack --pack-destination /tmp && tar -tf /tmp/knolo-agents-*.tgz ;;
           esac
   wasm:
     runs-on: ubuntu-latest

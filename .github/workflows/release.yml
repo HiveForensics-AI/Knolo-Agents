@@ -14,13 +14,14 @@ jobs:
       - uses: dtolnay/rust-toolchain@stable
       - uses: actions/setup-node@1e60f620b9541dca151540becc8114408c7e2c4a
         with: { node-version: 20, registry-url: https://registry.npmjs.org }
+      - run: ./scripts/hygiene.sh
       - run: corepack enable && pnpm install --frozen-lockfile
-      - run: cargo test --workspace && pnpm --filter @knolo/agents test && ./scripts/hygiene.sh
+      - run: cargo test --workspace && pnpm --filter @knolo/agents test
       - name: Verify selected version and publication contents
         run: |
           case '${{ inputs.artifact }}' in
             knolo-agent|knolo-agent-core) cargo package -p '${{ inputs.artifact }}' --list ;;
-            agents) test "$(node -p "require('./packages/agents/package.json').version")" = '${{ inputs.version }}'; pnpm --filter @knolo/agents pack --pack-destination /tmp ;;
+            agents) test "$(node -p "require('./packages/agents/package.json').version")" = '${{ inputs.version }}'; cd packages/agents && npm pack --pack-destination /tmp ;;
           esac
       - name: Publish
         env: { NODE_AUTH_TOKEN: "${{ secrets.NPM_TOKEN }}", CARGO_REGISTRY_TOKEN: "${{ secrets.CARGO_REGISTRY_TOKEN }}" }
