@@ -3,7 +3,7 @@
   "version": "0.1.2",
   "type": "module",
   "description": "Typed graph builders and explicit TypeScript/WASM adapters for Knolo Agents.",
-  "license": "MIT",
+  "license": "Apache-2.0",
   "author": "Knolo contributors",
   "sideEffects": false,
   "peerDependencies": {

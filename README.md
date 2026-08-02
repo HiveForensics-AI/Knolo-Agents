@@ -96,4 +96,4 @@ through the shared pack contract. APIs and contracts may evolve before 1.0.
 
 ## License
 
-MIT. See [LICENSE](LICENSE).
+Apache License 2.0. See [LICENSE](LICENSE).
