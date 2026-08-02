@@ -1,40 +1,34 @@
 # Knolo Agents
 
-Knolo Agents is an independent toolkit for building reliable, inspectable AI
-agents around reusable packs. Its guiding philosophy is **Explicit > Magic**:
-configuration, capabilities, permissions, and execution should be visible,
-reviewable, and testable.
+Knolo Agents is an independent toolkit for reliable, inspectable AI agents. Its
+rule is **Explicit > Magic**: typed graphs, authority, effects, state changes, and
+replay inputs remain reviewable.
 
-## Pack-centric design
+## Start here
 
-A pack is the unit of agent capability. It describes what an agent can do,
-which contracts it follows, and how it can be composed with other packs. Packs
-make behavior portable without hiding important runtime decisions behind
-implicit discovery.
+- Rust runtime: `crates/knolo-agent`; portable contracts: `crates/knolo-agent-core`.
+- TypeScript SDK: `packages/agents` (`@knolo/agents`).
+- Cross-runtime schemas and fixtures: `contracts`.
+- Runnable and copyable scenarios with least-authority packs: `examples`.
+- Design and operating documentation: `docs`.
 
-## Architecture
+Run `cargo test --workspace` and `pnpm --filter @knolo/agents test` after installing
+with the locked pnpm version. See `CONTRIBUTING.md` for the complete checks.
 
-- `crates/knolo-agent-core` contains provider-neutral contracts and primitives.
-- `crates/knolo-agent` contains the Rust agent runtime surface.
-- `packages/agents` publishes the TypeScript package `@knolo/agents`.
-- `contracts/` holds schemas and deterministic fixtures.
-- `examples/` contains small, runnable usage patterns.
-- `docs/architecture/` records Knolo-owned design decisions.
+## Dependency boundary
 
-`@knolo/core` is a dependency boundary consumed by the TypeScript package; its
-implementation is not bundled or duplicated here.
+Knolo Agents depends on, but is separate from, `@knolo/core`. Core is a peer
+installed by consumers and may inject Cortex and ClaimGraph capabilities. Its
+implementation, data, credentials, and releases are not included here. See
+`docs/core-boundary.md`.
 
-## Workspace
+## Safety and durability
 
-Rust uses Cargo. TypeScript uses pnpm, selected as the single Node package
-manager for this repository; `pnpm-lock.yaml` is the only Node lockfile.
+Packs grant capabilities and budgets explicitly. Policy checks every effect;
+validated state transactions emit ordered events. Checkpoints bind graph, pack,
+policy, node, and contract hashes. Handoffs narrow authority, human resumes expire,
+and live-effect replay requires explicit authorization.
 
-## Roadmap
-
-1. Stabilize core pack and agent contracts.
-2. Add explicit pack validation and capability policies.
-3. Connect the Rust runtime to the TypeScript APIs and schema fixtures.
-4. Add documented persistence, observability, and deployment adapters.
-
-This repository is at the foundation phase; APIs may evolve as the contracts
-are exercised by real packs.
+Rust crates and `@knolo/agents` use independent semantic versions. Compatibility
+and release rules are documented in `docs/compatibility.md` and
+`docs/releasing.md`. Security reports follow `SECURITY.md`.

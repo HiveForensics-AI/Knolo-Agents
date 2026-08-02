@@ -1,6 +1,12 @@
 # Architecture
 
-Knolo Agents is organized around explicit, inspectable packs. Rust owns the
-runtime and core contracts; TypeScript provides the agent-facing package. The
-`@knolo/core` package is an external dependency boundary and is not bundled in
-this repository.
+Knolo Agents is an independent Rust runtime and TypeScript SDK. Definitions are
+compiled into deterministic graphs; a scheduler applies validated state patches,
+emits ordered events, and checkpoints before an external suspension. Hosts inject
+tools, storage, clocks, and capabilities. No provider is discovered implicitly.
+
+`knolo-agent-core` owns portable contracts, `knolo-agent` owns native execution,
+`knolo-agent-wasm` exposes the JSON protocol, and `@knolo/agents` owns ergonomic
+TypeScript builders. `@knolo/core` is a separately published peer dependency. It
+owns Cortex and ClaimGraph data and implementations; this repository contains
+only typed injection interfaces and never vendors, re-exports, or publishes core.

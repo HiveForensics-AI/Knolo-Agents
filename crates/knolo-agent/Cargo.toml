@@ -6,6 +6,12 @@ license.workspace = true
 rust-version.workspace = true
 description = "Knolo agent runtime."
 
+repository = "https://github.com/knolo-ai/knolo-agents"
+homepage = "https://github.com/knolo-ai/knolo-agents"
+readme = "../../README.md"
+keywords = ["knolo", "agents", "ai"]
+categories = ["development-tools"]
+
 [dependencies]
 knolo-agent-core.workspace = true
 serde.workspace = true

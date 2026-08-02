@@ -1,0 +1,6 @@
+* @knolo-ai/maintainers
+/.github/ @knolo-ai/release-engineering
+/contracts/ @knolo-ai/runtime
+/crates/ @knolo-ai/runtime
+/packages/ @knolo-ai/sdk
+/SECURITY.md @knolo-ai/security
