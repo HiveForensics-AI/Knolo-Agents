@@ -8,3 +8,8 @@ description = "Core contracts and runtime primitives for Knolo agents."
 
 [lib]
 path = "src/lib.rs"
+
+[dependencies]
+serde.workspace = true
+serde_json.workspace = true
+sha2.workspace = true
