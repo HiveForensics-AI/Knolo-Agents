@@ -51,5 +51,5 @@ jobs:
       - run: node scripts/check-packs.mjs
       - run: |
           test -z "$(git status --short)"
-          cargo package -p knolo-agent-core --allow-dirty --no-verify --list
-          cargo package -p knolo-agent --allow-dirty --no-verify --list
+          cargo package -p knolo-agent-core --no-verify --list
+          cargo package -p knolo-agent --no-verify --list

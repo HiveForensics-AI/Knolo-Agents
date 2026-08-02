@@ -34,3 +34,12 @@ generated/
 # Package dry-runs and archives
 *.crate
 *.tgz
+*.tar.gz
+
+# Test and tool caches
+.eslintcache
+.parcel-cache/
+.turbo/
+.pnpm-store/
+.pnpm-debug.log*
+*.log

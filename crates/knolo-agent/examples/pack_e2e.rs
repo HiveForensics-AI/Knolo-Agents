@@ -9,7 +9,7 @@ use knolo_agent::{
 };
 use knolo_agent::{
     host::ToolRegistry,
-    pack::load_agent,
+    pack::{load_agent_native, PackAgentReferenceV1},
     policy::BudgetLedger,
     replay::{ArtifactHashesV1, ReplayModeV1, ReplayRequestV1},
     runtime::{RuntimePolicyV1, Scheduler},
@@ -19,7 +19,7 @@ use knolo_agent::{
 use serde_json::{json, Value};
 use std::collections::{BTreeMap, BTreeSet};
 
-const PACK: &str = include_str!("../../../examples/packs/agent-e2e.knolo.json");
+const PACK: &[u8] = include_bytes!("../fixtures/agent-e2e.knolo");
 
 fn id<T: std::str::FromStr>(value: &str) -> T
 where
@@ -129,7 +129,16 @@ fn control_graph() -> (CompiledGraphV1, StateSchemaV1, StateSnapshot) {
 }
 
 fn main() -> Result<(), CoreError> {
-    let loaded = load_agent(PACK, "research")?;
+    let loaded = load_agent_native(
+        PACK,
+        "research",
+        PackAgentReferenceV1 {
+            graph: id("examples.research.graph"),
+            definition: "examples/agents/research.json".into(),
+            capabilities: [id("cortex")].into_iter().collect(),
+            namespaces: [id("knowledge/private")].into_iter().collect(),
+        },
+    )?;
     let mut registry = ToolRegistry::default();
     registry.register(EchoTool {
         definition: knolo_agent::tool::ToolDefinition {
