@@ -35,6 +35,13 @@ argument constraints, and budgets explicitly. Rust compiles a pack into immutabl
 policy and checks every effect; the TypeScript builder also rejects graph
 capabilities absent from a referenced pack.
 
+Real agent constraints can be loaded from a JSON companion manifest (`.knolo.json`)
+with `knolo_agent::pack::load_agent` or `load_agent_file`. See
+`cargo run -p knolo-agent --example pack_e2e` for pack loading, an allowed and
+denied tool call, and deterministic replay of the control plane. The current
+loader consumes references and authority; resolving native `.knolo` binary
+storage remains a future `@knolo/core` integration.
+
 Policy checks every effect;
 validated state transactions emit ordered events. Checkpoints bind graph, pack,
 policy, node, and contract hashes. Handoffs narrow authority, human resumes expire,

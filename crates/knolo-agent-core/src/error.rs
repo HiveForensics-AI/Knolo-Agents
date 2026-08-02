@@ -8,6 +8,7 @@ pub enum CoreError {
     InvalidPatch(String),
     RevisionConflict { expected: u64, actual: u64 },
     SchemaViolation(String),
+    PackLoad(String),
     CheckpointIncompatible(String),
     AuthorityEscalation(String),
     ApprovalRequired(String),

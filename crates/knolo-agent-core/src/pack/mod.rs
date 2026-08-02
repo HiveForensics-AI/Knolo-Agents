@@ -1,4 +1,4 @@
-use crate::{tool::ResourceBudgetV1, CapabilityId, NamespaceId, PackId, ToolId};
+use crate::{tool::ResourceBudgetV1, CapabilityId, GraphId, NamespaceId, PackId, ToolId};
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 use std::collections::{BTreeMap, BTreeSet};
@@ -14,6 +14,53 @@ pub struct PackDeclarationV1 {
     pub argument_constraints: BTreeMap<ToolId, Value>,
     pub budget: ResourceBudgetV1,
     pub capability_bindings: BTreeMap<CapabilityId, String>,
+}
+
+/// A real, JSON-serializable pack manifest consumed by the agent boundary.
+/// The referenced graph/definition contents are owned by the caller or core;
+/// this manifest only records the authority and references.
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct PackManifestV1 {
+    pub version: u16,
+    pub id: PackId,
+    pub metadata: PackMetadataV1,
+    pub agents: BTreeMap<String, PackAgentReferenceV1>,
+    pub tools: BTreeSet<ToolId>,
+    pub namespaces: BTreeSet<NamespaceId>,
+    pub argument_constraints: BTreeMap<ToolId, Value>,
+    pub budget: ResourceBudgetV1,
+    pub capability_bindings: BTreeMap<CapabilityId, String>,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct PackMetadataV1 {
+    pub name: String,
+    pub description: String,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct PackAgentReferenceV1 {
+    pub graph: GraphId,
+    pub definition: String,
+    pub capabilities: BTreeSet<CapabilityId>,
+    pub namespaces: BTreeSet<NamespaceId>,
+}
+
+impl PackManifestV1 {
+    pub fn declaration(&self) -> PackDeclarationV1 {
+        PackDeclarationV1 {
+            version: self.version,
+            id: self.id.clone(),
+            tools: self.tools.clone(),
+            namespaces: self.namespaces.clone(),
+            argument_constraints: self.argument_constraints.clone(),
+            budget: self.budget.clone(),
+            capability_bindings: self.capability_bindings.clone(),
+        }
+    }
 }
 
 /// Immutable, pack-derived authority used by a host execution.
