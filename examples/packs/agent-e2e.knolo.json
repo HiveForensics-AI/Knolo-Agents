@@ -1,0 +1,23 @@
+{
+  "version": 1,
+  "id": "examples.agent-e2e",
+  "metadata": {
+    "name": "Pack-constrained research agent",
+    "description": "A deterministic control-plane example with one granted search tool."
+  },
+  "agents": {
+    "research": {
+      "graph": "examples.research.graph",
+      "definition": "examples/agents/research.json",
+      "capabilities": ["cortex"],
+      "namespaces": ["knowledge/private"]
+    }
+  },
+  "tools": ["search"],
+  "namespaces": ["knowledge/private"],
+  "argument_constraints": {
+    "search": {"type": "object", "properties": {"q": {"const": "Knolo"}}}
+  },
+  "budget": {"max_calls": 1, "max_units": 10, "max_duration_ms": 1000},
+  "capability_bindings": {"cortex": "host:cortex"}
+}
