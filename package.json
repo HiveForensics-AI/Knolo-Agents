@@ -1,0 +1,11 @@
+{
+  "name": "knolo-agents-workspace",
+  "private": true,
+  "packageManager": "pnpm@9.15.0",
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "check": "pnpm --filter @knolo/agents check"
+  }
+}

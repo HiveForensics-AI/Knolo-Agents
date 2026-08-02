@@ -1,0 +1,24 @@
+lockfileVersion: '9.0'
+
+settings:
+  autoInstallPeers: true
+  excludeLinksFromLockfile: false
+
+importers:
+
+  .: {}
+
+  packages/agents:
+    dependencies:
+      '@knolo/core':
+        specifier: ^3.5.0
+        version: 3.5.0
+
+packages:
+
+  '@knolo/core@3.5.0':
+    resolution: {integrity: sha512-y+5B7qjo71VKn3Z3OB5wmwdI6XdiX8MNVWeuSDZQWvFNGbwOeaSe3zV4hGYwyfOGjv5ch0z0epQwZfJQto2jiA==}
+
+snapshots:
+
+  '@knolo/core@3.5.0': {}

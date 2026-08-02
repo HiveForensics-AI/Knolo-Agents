@@ -1,0 +1,17 @@
+{
+  "name": "@knolo/agents",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "TypeScript agent interfaces for Knolo.",
+  "license": "MIT",
+  "peerDependencies": {
+    "@knolo/core": "^3.5.0"
+  },
+  "scripts": {
+    "check": "tsc --noEmit"
+  },
+  "files": [
+    "dist"
+  ]
+}

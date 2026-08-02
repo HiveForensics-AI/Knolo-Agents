@@ -1,0 +1,10 @@
+[package]
+name = "knolo-agent-core"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+rust-version.workspace = true
+description = "Core contracts and runtime primitives for Knolo agents."
+
+[lib]
+path = "src/lib.rs"
