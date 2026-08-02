@@ -9,6 +9,10 @@ pub enum CoreError {
     RevisionConflict { expected: u64, actual: u64 },
     SchemaViolation(String),
     CheckpointIncompatible(String),
+    AuthorityEscalation(String),
+    ApprovalRequired(String),
+    ResumeRejected(String),
+    ReplayRejected(String),
     PolicyDenied(crate::policy::PolicyDenialV1),
     Host(String),
 }
