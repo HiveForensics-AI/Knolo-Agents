@@ -13,7 +13,7 @@ jobs:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
       - uses: dtolnay/rust-toolchain@stable
       - uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444
-        with: { node-version: 24, registry-url: https://registry.npmjs.org }
+        with: { node-version: 24, package-manager-cache: false, registry-url: https://registry.npmjs.org }
       - run: ./scripts/hygiene.sh
       - run: corepack enable && pnpm install --frozen-lockfile
       - run: cargo test --workspace && pnpm --filter @knolo/agents test
