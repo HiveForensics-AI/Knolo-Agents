@@ -1,0 +1,15 @@
+[package]
+name = "knolo-agent-wasm"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+rust-version.workspace = true
+description = "WASM-safe JSON protocol adapter for Knolo agents."
+
+[lib]
+crate-type = ["cdylib", "rlib"]
+
+[dependencies]
+knolo-agent-core.workspace = true
+serde.workspace = true
+serde_json.workspace = true
