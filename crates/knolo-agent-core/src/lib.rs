@@ -5,7 +5,12 @@ pub mod error;
 pub mod event;
 pub mod graph;
 pub mod node;
+pub mod pack;
+pub mod policy;
+pub mod retrieval;
 pub mod state;
+pub mod tool;
+pub mod wasm;
 
 pub use contract::*;
 pub use error::CoreError;

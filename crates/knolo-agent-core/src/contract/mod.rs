@@ -54,6 +54,9 @@ identifier!(TransitionId);
 identifier!(ExecutionId);
 identifier!(PackId);
 identifier!(NamespaceId);
+identifier!(ToolId);
+identifier!(CapabilityId);
+identifier!(ClaimGraphId);
 identifier!(StateSchemaId);
 
 /// Versioned reference to a contract.

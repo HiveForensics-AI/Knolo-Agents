@@ -1,0 +1,1 @@
+{"$schema":"https://json-schema.org/draft/2020-12/schema","$id":"https://knolo.dev/contracts/tool-call-v1","type":"object","additionalProperties":false,"required":["version","call_id","tool_id","arguments"],"properties":{"version":{"const":1},"call_id":{"type":"string","minLength":1},"tool_id":{"type":"string","minLength":1},"arguments":{"type":"object"}}}
