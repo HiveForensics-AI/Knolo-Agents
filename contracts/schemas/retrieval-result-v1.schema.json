@@ -1,0 +1,55 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://knolo.dev/contracts/retrieval-result-v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "version",
+    "evidence"
+  ],
+  "properties": {
+    "version": {
+      "const": 1
+    },
+    "evidence": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "content",
+          "score_micros",
+          "provenance"
+        ],
+        "properties": {
+          "content": {},
+          "score_micros": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 1000000
+          },
+          "provenance": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "source_id",
+              "locator",
+              "content_hash"
+            ],
+            "properties": {
+              "source_id": {
+                "type": "string"
+              },
+              "locator": {
+                "type": "string"
+              },
+              "content_hash": {
+                "type": "string"
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

@@ -9,6 +9,8 @@ pub enum CoreError {
     RevisionConflict { expected: u64, actual: u64 },
     SchemaViolation(String),
     CheckpointIncompatible(String),
+    PolicyDenied(crate::policy::PolicyDenialV1),
+    Host(String),
 }
 impl fmt::Display for CoreError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
