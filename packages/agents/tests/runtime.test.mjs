@@ -17,6 +17,21 @@ test("portable engine produces ordered events and inferred patches", async () =>
   assert.ok(report.events.every((event, index) => event.sequence === index + 1));
 });
 
+test("deterministic replay re-executes the control plane and detects divergence", async () => {
+  const agent = Agent.load({ definition: definition(), engine: "typescript" });
+  const first = await agent.run({ count: 0 }, { executionId: "replay-fixture" });
+  const replayed = await agent.replayDeterministic({ count: 0 }, first.events);
+  assert.deepEqual(replayed.status, first.status);
+  await assert.rejects(() => agent.replayDeterministic({ count: 0 }, first.events.slice(0, -1)), /replay diverged/);
+});
+
+test("pack capability grants are enforced at definition time", () => {
+  const state = stateSchema("packed-state", { count: "Number" });
+  const restricted = node("restricted", { capabilities: ["retrieval"], run: () => ({ outcome: { type: "continue" } }) });
+  const done = terminal("done", { run: () => ({ outcome: { type: "terminate", result: null } }) });
+  assert.throws(() => defineAgent({ id: "denied-pack", state, nodes: [restricted, done], transitions: [transition("restricted", "continue", "done")], entry: "restricted", pack: { version: 1, id: "minimal", capabilities: ["state"] } }), /not granted by pack/);
+});
+
 test("engine limitations and cancellation are explicit", async () => {
   assert.throws(() => Agent.load({ definition: definition(["tools"]), engine: "typescript" }), /does not support capabilities/);
   assert.throws(() => Agent.load({ definition: definition(), engine: "wasm" }), /no adapter/);

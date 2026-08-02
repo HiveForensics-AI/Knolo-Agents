@@ -34,10 +34,12 @@ export interface AgentDefinition<S, N extends readonly NodeSpec<S>[] = readonly 
 export function defineAgent<S, const N extends readonly NodeSpec<S>[]>(config: { id: string; state: TypedStateSchema<S>; nodes: N; transitions: readonly ValidTransition<N>[]; entry: NodeIds<N>; cycles?: readonly CycleDefinitionV1[]; limits?: ExecutionLimitsV1; pack?: PackReference }): AgentDefinition<S, N> {
   const handlers: Record<string, NodeHandler<S>> = {}; for (const item of config.nodes) if (item.handler) handlers[item.id] = item.handler;
   const graph: GraphDefinitionV1 = { version: 1, id: config.id, state_schema: config.state.id, entry: config.entry, nodes: config.nodes.map(({ id, terminal, reads, writes }) => ({ id, terminal, reads, writes })), transitions: config.transitions, cycles: config.cycles ?? [], limits: config.limits ?? limits() };
-  validateDefinition(graph); return { graph, schema: config.state, handlers, capabilities: [...new Set(config.nodes.flatMap(n => n.capabilities ?? []))], pack: config.pack };
+  validateDefinition(graph); validateGraphStatePaths(graph, config.state); const capabilities = [...new Set(config.nodes.flatMap(n => n.capabilities ?? []))];
+  if (config.pack?.capabilities && capabilities.some(capability => !config.pack!.capabilities!.includes(capability))) throw new DefinitionError("graph capability is not granted by pack");
+  return { graph, schema: config.state, handlers, capabilities, pack: config.pack };
 }
 export interface CompiledAgentDefinition<S> extends AgentDefinition<S> { readonly hash: string }
-export function compile<S>(definition: AgentDefinition<S>): CompiledAgentDefinition<S> { validateDefinition(definition.graph); return { ...definition, hash: stableHash(definition.graph) }; }
+export function compile<S>(definition: AgentDefinition<S>): CompiledAgentDefinition<S> { validateDefinition(definition.graph); validateGraphStatePaths(definition.graph, definition.schema); if (definition.pack?.capabilities && definition.capabilities.some(capability => !definition.pack!.capabilities!.includes(capability))) throw new DefinitionError("graph capability is not granted by pack"); return { ...definition, hash: stableHash(definition.graph) }; }
 // Dependency-free SHA-256 keeps compiled hashes identical in browsers, Node, and Rust.
 function stableHash(value: unknown): string {
   const text = JSON.stringify(value); const bytes = new TextEncoder().encode(text); const bitLength = bytes.length * 8; const paddedLength = Math.ceil((bytes.length + 9) / 64) * 64; const data = new Uint8Array(paddedLength); data.set(bytes); data[bytes.length] = 0x80; const view = new DataView(data.buffer); view.setUint32(paddedLength - 4, bitLength >>> 0); view.setUint32(paddedLength - 8, Math.floor(bitLength / 0x100000000));
@@ -54,3 +56,12 @@ export function validateDefinition(graph: GraphDefinitionV1): void {
   const routes = new Set<string>(); const reached = new Set([graph.entry]); for (const t of graph.transitions) { if (!ids.has(t.from) || !ids.has(t.to)) throw new DefinitionError("transition endpoint is not declared"); const key = `${t.from}\0${t.route}`; if (routes.has(key)) throw new DefinitionError("duplicate route from node"); routes.add(key); }
   let changed = true; while (changed) { changed = false; for (const t of graph.transitions) if (reached.has(t.from) && !reached.has(t.to)) { reached.add(t.to); changed = true; } } if (reached.size !== ids.size) throw new DefinitionError("unreachable node");
 }
+
+/** Validate the JSON state boundary before a handler can observe or mutate it. */
+export function validateState<S>(schema: TypedStateSchema<S>, value: S): void {
+  for (const path of schema.required) if (readPath(value, path) === undefined) throw new DefinitionError(`missing required state path ${path}`);
+  for (const [path, type] of Object.entries(schema.paths)) { const item = readPath(value, path); if (item !== undefined && valueType(item) !== type) throw new DefinitionError(`wrong state type at ${path}`); }
+}
+function readPath(value: unknown, path: string): unknown { return path.slice(1).split("/").reduce((current: any, key) => current == null ? undefined : current[key], value); }
+function valueType(value: unknown): ValueType { if (value === null) return "Null"; if (Array.isArray(value)) return "Array"; switch (typeof value) { case "boolean": return "Bool"; case "number": return "Number"; case "string": return "String"; case "object": return "Object"; default: throw new DefinitionError("state must contain JSON values"); } }
+function validateGraphStatePaths(graph: GraphDefinitionV1, schema: StateSchemaV1): void { const paths = new Set(Object.keys(schema.paths)); for (const node of graph.nodes) for (const path of [...node.reads, ...node.writes]) if (!paths.has(path)) throw new DefinitionError(`node ${node.id} references undeclared state path ${path}`); }

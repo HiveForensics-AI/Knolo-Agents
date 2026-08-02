@@ -32,6 +32,7 @@ impl ToolAuditSink for Vec<ToolAuditEventV1> {
 #[derive(Default)]
 pub struct ToolRegistry {
     tools: BTreeMap<ToolId, Box<dyn ToolImplementation>>,
+    audit_sequence: u64,
 }
 impl ToolRegistry {
     pub fn register(&mut self, tool: impl ToolImplementation + 'static) -> Result<(), CoreError> {
@@ -84,9 +85,10 @@ impl ToolRegistry {
         } else {
             "denied"
         };
+        self.audit_sequence += 1;
         audit.emit(&ToolAuditEventV1 {
             version: 1,
-            sequence: 0,
+            sequence: self.audit_sequence,
             call_id: call.call_id,
             tool_id: call.tool_id,
             outcome: status.into(),
