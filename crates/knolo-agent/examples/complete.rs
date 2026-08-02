@@ -7,6 +7,7 @@ use knolo_agent::{
     CoreError, GraphId,
 };
 use serde_json::{json, Value};
+use std::collections::BTreeSet;
 
 struct CoreBoundary;
 impl CortexCapability for CoreBoundary {
@@ -39,8 +40,8 @@ fn main() -> Result<(), CoreError> {
         },
     )?;
     let authority = AuthorityV1 {
-        capabilities: vec!["claims.read".into()],
-        namespaces: vec!["local".into()],
+        capabilities: BTreeSet::from(["claims.read".into()]),
+        namespaces: BTreeSet::from(["local".into()]),
         max_steps: 2,
         max_cost_micros: 10,
     };

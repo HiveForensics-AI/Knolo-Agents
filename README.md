@@ -4,12 +4,18 @@ Knolo Agents is an independent toolkit for reliable, inspectable AI agents. Its
 rule is **Explicit > Magic**: typed graphs, authority, effects, state changes, and
 replay inputs remain reviewable.
 
+The Rust scheduler is the authoritative execution runtime. The TypeScript package
+is an ergonomic graph builder and portable in-memory engine for the `state`,
+`routing`, and `suspension` subset; tool, retrieval, and durable-checkpoint effects
+remain host-bound or Rust/WASM integrations. This boundary is intentional, not a
+silent fallback.
+
 ## Start here
 
 - Rust runtime: `crates/knolo-agent`; portable contracts: `crates/knolo-agent-core`.
 - TypeScript SDK: `packages/agents` (`@knolo/agents`).
 - Cross-runtime schemas and fixtures: `contracts`.
-- Runnable and copyable scenarios with least-authority packs: `examples`.
+- Runnable and copyable scenarios with least-authority `.knolo` pack declarations: `examples`.
 - Design and operating documentation: `docs`.
 
 Run `cargo test --workspace` and `pnpm --filter @knolo/agents test` after installing
@@ -24,7 +30,12 @@ implementation, data, credentials, and releases are not included here. See
 
 ## Safety and durability
 
-Packs grant capabilities and budgets explicitly. Policy checks every effect;
+Packs are the authority source: they grant capabilities, namespaces, tools,
+argument constraints, and budgets explicitly. Rust compiles a pack into immutable
+policy and checks every effect; the TypeScript builder also rejects graph
+capabilities absent from a referenced pack.
+
+Policy checks every effect;
 validated state transactions emit ordered events. Checkpoints bind graph, pack,
 policy, node, and contract hashes. Handoffs narrow authority, human resumes expire,
 and live-effect replay requires explicit authorization.

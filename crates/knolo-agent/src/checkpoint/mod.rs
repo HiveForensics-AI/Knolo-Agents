@@ -1,4 +1,5 @@
-use knolo_agent_core::{checkpoint::CheckpointV1, node::CheckpointStore, CoreError, ExecutionId};
+pub use knolo_agent_core::checkpoint::CheckpointV1;
+use knolo_agent_core::{node::CheckpointStore, CoreError, ExecutionId};
 use std::collections::BTreeMap;
 use std::fs;
 use std::path::{Path, PathBuf};

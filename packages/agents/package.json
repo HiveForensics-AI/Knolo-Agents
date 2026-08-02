@@ -7,6 +7,9 @@
   "peerDependencies": {
     "@knolo/core": "^3.5.0"
   },
+  "devDependencies": {
+    "typescript": "^5.6.3"
+  },
   "main": "./dist/node.js",
   "module": "./dist/index.js",
   "types": "./dist/index.d.ts",

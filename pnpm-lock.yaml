@@ -13,12 +13,23 @@ importers:
       '@knolo/core':
         specifier: ^3.5.0
         version: 3.5.0
+    devDependencies:
+      typescript:
+        specifier: ^5.6.3
+        version: 5.6.3
 
 packages:
 
   '@knolo/core@3.5.0':
     resolution: {integrity: sha512-y+5B7qjo71VKn3Z3OB5wmwdI6XdiX8MNVWeuSDZQWvFNGbwOeaSe3zV4hGYwyfOGjv5ch0z0epQwZfJQto2jiA==}
 
+  typescript@5.6.3:
+    resolution: {integrity: sha512-hjcS1mhfuyi4WW8IWtjP7brDrG2cuDZukyrYrSauoXGNgx0S7zceP07adYkJycEr56BOUTNPzbInooiN3fn1qw==}
+    engines: {node: '>=14.17'}
+    hasBin: true
+
 snapshots:
 
   '@knolo/core@3.5.0': {}
+
+  typescript@5.6.3: {}
