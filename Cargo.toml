@@ -3,6 +3,7 @@ resolver = "2"
 members = [
     "crates/knolo-agent-core",
     "crates/knolo-agent",
+    "crates/knolo-agent-wasm",
 ]
 
 [workspace.package]

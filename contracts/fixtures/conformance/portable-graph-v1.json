@@ -1,0 +1,15 @@
+{
+  "version": 1,
+  "id": "portable-counter",
+  "state_schema": "counter-state",
+  "entry": "increment",
+  "nodes": [
+    { "id": "increment", "terminal": false, "reads": ["/count"], "writes": ["/count"] },
+    { "id": "done", "terminal": true, "reads": ["/count"], "writes": [] }
+  ],
+  "transitions": [
+    { "id": "increment.continue.done", "from": "increment", "route": "continue", "to": "done" }
+  ],
+  "cycles": [],
+  "limits": { "max_steps": 10, "max_tokens": 100, "max_cost_micros": 1000, "timeout_ms": 30000 }
+}

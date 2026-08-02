@@ -1,11 +1,16 @@
 {
   "compilerOptions": {
     "strict": true,
-    "noEmit": true,
+    "declaration": true,
+    "declarationMap": true,
+    "sourceMap": true,
+    "outDir": "dist",
+    "rootDir": "src",
     "target": "ES2022",
     "module": "NodeNext",
     "moduleResolution": "NodeNext",
     "skipLibCheck": true
   },
-  "include": ["src"]
+  "include": ["src"],
+  "exclude": ["tests", "dist"]
 }
