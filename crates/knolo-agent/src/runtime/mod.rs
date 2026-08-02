@@ -13,6 +13,8 @@ pub struct RuntimePolicyV1 {
     pub retry_delay_ms: u64,
     pub pack_hash: String,
     pub policy_hash: String,
+    pub node_implementation_hash: String,
+    pub contract_hash: String,
 }
 #[derive(Debug, Clone, PartialEq)]
 pub enum ExecutionStatusV1 {
@@ -82,10 +84,12 @@ impl<'a, E: NodeExecutor, S: EventSink, C: Clock, K: CheckpointStore> Scheduler<
         cp: CheckpointV1,
         cancelled: impl Fn() -> bool,
     ) -> Result<ExecutionReportV1, CoreError> {
-        cp.check_compatible(
+        cp.check_artifacts(
             self.graph.hash(),
             &self.policy.pack_hash,
             &self.policy.policy_hash,
+            &self.policy.node_implementation_hash,
+            &self.policy.contract_hash,
         )?;
         self.run_from(
             cp.execution_id,
@@ -332,6 +336,8 @@ impl<'a, E: NodeExecutor, S: EventSink, C: Clock, K: CheckpointStore> Scheduler<
                 graph_hash: self.graph.hash().into(),
                 pack_hash: self.policy.pack_hash.clone(),
                 policy_hash: self.policy.policy_hash.clone(),
+                node_implementation_hash: self.policy.node_implementation_hash.clone(),
+                contract_hash: self.policy.contract_hash.clone(),
                 state: state.clone(),
                 pending_node: pending.clone(),
                 event_cursor: seq + 1,

@@ -128,6 +128,8 @@ fn policy() -> RuntimePolicyV1 {
         retry_delay_ms: 0,
         pack_hash: "p".into(),
         policy_hash: "policy".into(),
+        node_implementation_hash: "nodes".into(),
+        contract_hash: "contracts".into(),
     }
 }
 #[test]
