@@ -398,6 +398,7 @@ impl<'a, E: NodeExecutor, S: EventSink, C: Clock, K: CheckpointStore> Scheduler<
         out.push(e);
         Ok(())
     }
+    #[allow(clippy::too_many_arguments)]
     fn fail(
         &mut self,
         id: ExecutionId,

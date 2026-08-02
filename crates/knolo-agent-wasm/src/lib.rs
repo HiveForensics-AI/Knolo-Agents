@@ -13,6 +13,7 @@ struct ProtocolRequest {
 }
 
 #[derive(Debug, Serialize)]
+#[allow(clippy::large_enum_variant)]
 #[serde(tag = "type", rename_all = "snake_case")]
 enum ProtocolResponse {
     Inspection { inspection: Inspection },

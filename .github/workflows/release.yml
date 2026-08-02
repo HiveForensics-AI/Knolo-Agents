@@ -19,7 +19,7 @@ jobs:
       - name: Verify selected version and publication contents
         run: |
           case '${{ inputs.artifact }}' in
-            knolo-agent|knolo-agent-core) cargo package -p '${{ inputs.artifact }}' --allow-dirty --list ;;
+            knolo-agent|knolo-agent-core) cargo package -p '${{ inputs.artifact }}' --list ;;
             agents) test "$(node -p "require('./packages/agents/package.json').version")" = '${{ inputs.version }}'; pnpm --filter @knolo/agents pack --pack-destination /tmp ;;
           esac
       - name: Publish

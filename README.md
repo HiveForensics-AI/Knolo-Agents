@@ -1,52 +1,99 @@
 # Knolo Agents
 
-Knolo Agents is an independent toolkit for reliable, inspectable AI agents. Its
-rule is **Explicit > Magic**: typed graphs, authority, effects, state changes, and
-replay inputs remain reviewable.
+Knolo Agents is a Rust runtime and TypeScript SDK for building reliable,
+inspectable AI agents. It treats an agent run as a deterministic, reviewable
+control plane: typed graphs describe execution, packs grant authority, hosts
+provide effects, and ordered events make replay and auditing possible.
 
-The Rust scheduler is the authoritative execution runtime. The TypeScript package
-is an ergonomic graph builder and portable in-memory engine for the `state`,
-`routing`, and `suspension` subset; tool, retrieval, and durable-checkpoint effects
-remain host-bound or Rust/WASM integrations. This boundary is intentional, not a
-silent fallback.
+## Why it is different
 
-## Start here
+Knolo Agents is not an all-in-one prompt, chain, or provider integration layer.
+Compared with LangChain-style frameworks, it puts more of the execution contract
+in explicit data structures and less in dynamically assembled application code:
 
-- Rust runtime: `crates/knolo-agent`; portable contracts: `crates/knolo-agent-core`.
-- TypeScript SDK: `packages/agents` (`@knolo/agents`).
-- Cross-runtime schemas and fixtures: `contracts`.
-- Runnable and copyable scenarios with least-authority `.knolo` pack declarations: `examples`.
-- Design and operating documentation: `docs`.
+- graph transitions, state schemas, budgets, and effect boundaries are validated;
+- `.knolo` packs are least-authority policy inputs, not executable code;
+- tools, retrieval, Cortex, ClaimGraph, clocks, and storage are injected by the
+  host rather than discovered implicitly;
+- Rust owns the authoritative runtime and deterministic event model;
+- TypeScript provides ergonomic graph construction and a deliberately limited
+  portable engine, with no silent fallback between engines.
 
-Run `cargo test --workspace` and `pnpm --filter @knolo/agents test` after installing
-with the locked pnpm version. See `CONTRIBUTING.md` for the complete checks.
+This makes the project a good fit for governed workflows, durable automation,
+replayable control planes, and applications that need to inspect or constrain
+agent authority. It is not intended to replace a model provider, vector store,
+job queue, or application-specific data layer.
 
-## Dependency boundary
+## Architecture
 
-Knolo Agents depends on, but is separate from, `@knolo/core`. Core is a peer
-installed by consumers and may inject Cortex and ClaimGraph capabilities. Its
-implementation, data, credentials, and releases are not included here. See
-`docs/core-boundary.md`.
+| Layer | Responsibility |
+| --- | --- |
+| `knolo-agent-core` | Portable contracts, graph/state validation, policy types, events, replay, checkpoints, and pack declarations. |
+| `knolo-agent` | Native Rust scheduler, host effect boundaries, policy enforcement, pack loading, and durable runtime integrations. |
+| `knolo-agent-wasm` | Small JSON/WASM protocol adapter for embedding the portable contracts. Not currently published separately. |
+| `@knolo/agents` | Typed TypeScript builders, the deterministic state/routing/suspension engine, and explicit WASM integration. |
+| `@knolo/core` | Separate peer dependency owned by the consumer; it can provide Cortex and ClaimGraph implementations. |
 
-## Safety and durability
+The repository does not vendor `@knolo/core`, credentials, retrieval storage, or
+provider SDKs. See [the architecture overview](docs/architecture/README.md) and
+[the core boundary](docs/core-boundary.md).
 
-Packs are the authority source: they grant capabilities, namespaces, tools,
-argument constraints, and budgets explicitly. Rust compiles a pack into immutable
-policy and checks every effect; the TypeScript builder also rejects graph
-capabilities absent from a referenced pack.
+## Pack-constrained agents
 
-Real agent constraints can be loaded from a JSON companion manifest (`.knolo.json`)
-with `knolo_agent::pack::load_agent` or `load_agent_file`. See
-`cargo run -p knolo-agent --example pack_e2e` for pack loading, an allowed and
-denied tool call, and deterministic replay of the control plane. The current
-loader consumes references and authority; resolving native `.knolo` binary
-storage remains a future `@knolo/core` integration.
+A pack is an authority declaration. It can grant capabilities, namespaces, tools,
+argument constraints, and resource budgets. The Rust runtime compiles those
+grants into immutable policy and denies unauthorized effects before execution.
 
-Policy checks every effect;
-validated state transactions emit ordered events. Checkpoints bind graph, pack,
-policy, node, and contract hashes. Handoffs narrow authority, human resumes expire,
-and live-effect replay requires explicit authorization.
+Native `.knolo` declarations can be loaded from bytes or files with
+`load_native_pack` and `load_agent_native`; graph and definition references are
+kept as an explicit overlay because those definitions belong to the surrounding
+core/runtime. The validated `.knolo.json` companion manifest remains available
+for development and compatibility. See [docs/packs.md](docs/packs.md).
 
-Rust crates and `@knolo/agents` use independent semantic versions. Compatibility
-and release rules are documented in `docs/compatibility.md` and
-`docs/releasing.md`. Security reports follow `SECURITY.md`.
+## Quickstart
+
+Rust requires Rust 1.78 or newer:
+
+```bash
+cargo test --workspace
+cargo run -p knolo-agent --example pack_e2e
+```
+
+The example loads a native pack, demonstrates an allowed and denied tool call,
+and checks deterministic replay.
+
+For the TypeScript package, use Node 20 or newer and pnpm 9.15:
+
+```bash
+corepack enable
+pnpm install --frozen-lockfile
+pnpm --filter @knolo/agents test
+```
+
+The package exports typed builders such as `stateSchema`, `node`, `terminal`,
+`transition`, and `defineAgent`, plus `Agent.load` for selecting the TypeScript
+or WASM engine explicitly.
+
+## Examples and documentation
+
+- [Rust runtime examples](crates/knolo-agent/examples/)
+- [TypeScript example](examples/typescript/complete.ts)
+- [Pack declarations](examples/packs/)
+- [Documentation index](docs/README.md)
+- [Release checklist](docs/releasing.md)
+
+## Current status and limitations
+
+The project is an early `0.1.0` release. The Rust runtime is the authoritative
+execution path. The TypeScript engine intentionally supports deterministic state,
+routing, and suspension nodes; tool calls, retrieval, durable effects, and
+provider integrations require Rust, WASM adapters, or host implementations.
+
+Native pack loading currently consumes the repository’s core pack-declaration
+serialization. Agent graph/definition references are an explicit overlay, and
+`max_steps`/`max_cost_micros` remain runtime-owned limits until they are exposed
+through the shared pack contract. APIs and contracts may evolve before 1.0.
+
+## License
+
+MIT. See [LICENSE](LICENSE).

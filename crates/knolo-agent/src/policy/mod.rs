@@ -8,16 +8,9 @@ use serde_json::Value;
 
 pub use knolo_agent_core::policy::{PolicyDenialCodeV1, PolicyDenialV1};
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Default)]
 pub struct BudgetLedger {
     used: ResourceUsageV1,
-}
-impl Default for BudgetLedger {
-    fn default() -> Self {
-        Self {
-            used: ResourceUsageV1::default(),
-        }
-    }
 }
 impl BudgetLedger {
     pub fn reserve_call(

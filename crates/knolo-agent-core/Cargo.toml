@@ -4,7 +4,7 @@ version.workspace = true
 edition.workspace = true
 license.workspace = true
 rust-version.workspace = true
-description = "Core contracts and runtime primitives for Knolo agents."
+description = "Portable contracts and deterministic primitives for Knolo agents."
 
 repository = "https://github.com/knolo-ai/knolo-agents"
 homepage = "https://github.com/knolo-ai/knolo-agents"

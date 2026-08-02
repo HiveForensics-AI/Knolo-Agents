@@ -4,7 +4,7 @@ version.workspace = true
 edition.workspace = true
 license.workspace = true
 rust-version.workspace = true
-description = "Knolo agent runtime."
+description = "Deterministic, policy-enforced runtime for Knolo agents."
 
 repository = "https://github.com/knolo-ai/knolo-agents"
 homepage = "https://github.com/knolo-ai/knolo-agents"
