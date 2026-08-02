@@ -60,4 +60,4 @@ pnpm --filter @knolo/agents test
 ## Status and license
 
 This is the `0.1.0` early release of the TypeScript surface; APIs may evolve
-before 1.0. The package is MIT licensed. See [LICENSE](LICENSE).
+before 1.0. The package is licensed under Apache License 2.0. See [LICENSE](LICENSE).
