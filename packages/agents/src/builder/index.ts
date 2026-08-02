@@ -32,7 +32,10 @@ type NodeIds<N extends readonly { readonly id: string }[]> = N[number]["id"];
 type ValidTransition<N extends readonly NodeSpec<any, any, any>[]> = N[number] extends infer Item ? Item extends NodeSpec<any, infer Id, infer Routes> ? TransitionDefinitionV1 & { readonly from: Id; readonly route: Routes; readonly to: NodeIds<N> } : never : never;
 export interface AgentDefinition<S, N extends readonly NodeSpec<S>[] = readonly NodeSpec<S>[]> { readonly graph: GraphDefinitionV1; readonly schema: TypedStateSchema<S>; readonly handlers: Readonly<Record<string, NodeHandler<S>>>; readonly capabilities: readonly string[]; readonly pack?: PackReference }
 export function defineAgent<S, const N extends readonly NodeSpec<S>[]>(config: { id: string; state: TypedStateSchema<S>; nodes: N; transitions: readonly ValidTransition<N>[]; entry: NodeIds<N>; cycles?: readonly CycleDefinitionV1[]; limits?: ExecutionLimitsV1; pack?: PackReference }): AgentDefinition<S, N> {
-  const handlers: Record<string, NodeHandler<S>> = {}; for (const item of config.nodes) if (item.handler) handlers[item.id] = item.handler;
+  const handlers: Record<string, NodeHandler<S>> = {};
+  for (const item of config.nodes) {
+    if (item.handler) handlers[item.id] = item.handler;
+  }
   const graph: GraphDefinitionV1 = { version: 1, id: config.id, state_schema: config.state.id, entry: config.entry, nodes: config.nodes.map(({ id, terminal, reads, writes }) => ({ id, terminal, reads, writes })), transitions: config.transitions, cycles: config.cycles ?? [], limits: config.limits ?? limits() };
   validateDefinition(graph); validateGraphStatePaths(graph, config.state); const capabilities = [...new Set(config.nodes.flatMap(n => n.capabilities ?? []))];
   if (config.pack?.capabilities && capabilities.some(capability => !config.pack!.capabilities!.includes(capability))) throw new DefinitionError("graph capability is not granted by pack");
