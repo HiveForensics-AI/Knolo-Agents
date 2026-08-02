@@ -211,37 +211,32 @@ impl<'a, E: NodeExecutor, S: EventSink, C: Clock, K: CheckpointStore> Scheduler<
                     EventKindV1::NodeStarted { attempt },
                     &mut events,
                 )?;
-                match self.executor.execute(NodeRequest {
+                let execution = self.executor.execute(NodeRequest {
                     node_id: &node,
                     state: &state,
                     attempt,
-                }) {
-                    Ok(x) => {
-                        if let NodeOutcomeV1::Fail {
-                            error,
-                            retryable: true,
-                        } = &x.outcome
-                        {
-                            if attempt <= self.policy.max_retries {
-                                self.event(
-                                    &id,
-                                    Some(node.clone()),
-                                    &mut seq,
-                                    EventKindV1::Retrying {
-                                        attempt: attempt + 1,
-                                    },
-                                    &mut events,
-                                )?;
-                                continue;
-                            }
-                            let error = error.clone();
-                            return self
-                                .fail(id, node, state, events, seq, steps, tokens, cost, &error);
-                        }
-                        break x;
+                })?;
+                if let NodeOutcomeV1::Fail {
+                    error,
+                    retryable: true,
+                } = &execution.outcome
+                {
+                    if attempt <= self.policy.max_retries {
+                        self.event(
+                            &id,
+                            Some(node.clone()),
+                            &mut seq,
+                            EventKindV1::Retrying {
+                                attempt: attempt + 1,
+                            },
+                            &mut events,
+                        )?;
+                        continue;
                     }
-                    Err(e) => return Err(e),
+                    let error = error.clone();
+                    return self.fail(id, node, state, events, seq, steps, tokens, cost, &error);
                 }
+                break execution;
             };
             steps += 1;
             tokens = tokens.saturating_add(execution.tokens);
