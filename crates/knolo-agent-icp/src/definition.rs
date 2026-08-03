@@ -139,7 +139,7 @@ impl AgentDefinitionBundleV1 {
         let node_implementation_hash =
             format!("{:x}", Sha256::digest(bundle.implementation_id.as_bytes()));
         let policy = match &bundle.pack {
-            Some(pack) => Some(pack.compile().map_err(|e| CoreError::PackLoad(e))?),
+            Some(pack) => Some(pack.compile().map_err(CoreError::PackLoad)?),
             None => None,
         };
         Ok(LoadedDefinition {
