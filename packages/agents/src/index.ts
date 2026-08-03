@@ -8,3 +8,4 @@ export * from "./claims/index.js";
 export * from "./multi-agent/index.js";
 export * from "./hitl/index.js";
 export * from "./replay/index.js";
+export * from "./icp/index.js";

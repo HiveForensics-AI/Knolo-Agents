@@ -1,0 +1,6 @@
+{
+  "capabilities": ["echo", "handoff.delegate"],
+  "namespaces": ["tools", "examples.handoff"],
+  "max_steps": 10,
+  "max_cost_micros": 1000
+}

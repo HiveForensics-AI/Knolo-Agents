@@ -1,0 +1,122 @@
+{
+  "version": 1,
+  "implementation_id": "host-effects-v1",
+  "pack_hash": "pack-host",
+  "policy_hash": "policy-host",
+  "contract_hash": "contract-host",
+  "host": {
+    "auto_continue": false,
+    "timer_ns": 1000000000,
+    "llm_enabled": true,
+    "llm_model": "llama3.1:8b",
+    "knowledge_canister": null,
+    "allow_https_tools": false,
+    "max_effect_rounds": 8
+  },
+  "pack": {
+    "version": 1,
+    "id": "icp-host-pack",
+    "tools": ["echo"],
+    "namespaces": ["tools"],
+    "argument_constraints": {},
+    "budget": {
+      "max_calls": 32,
+      "max_units": 10000,
+      "max_duration_ms": 60000
+    },
+    "capability_bindings": {
+      "echo": "builtin:echo"
+    }
+  },
+  "graph": {
+    "version": 1,
+    "id": "host-effects",
+    "state_schema": "effects-state",
+    "entry": "prepare",
+    "nodes": [
+      {
+        "id": "prepare",
+        "terminal": false,
+        "reads": ["/phase"],
+        "writes": ["/phase"]
+      },
+      {
+        "id": "llm",
+        "terminal": false,
+        "reads": ["/prompt", "/phase"],
+        "writes": ["/phase", "/llm_result"]
+      },
+      {
+        "id": "tool",
+        "terminal": false,
+        "reads": ["/tool_id", "/tool_args", "/phase"],
+        "writes": ["/phase", "/tool_result"]
+      },
+      {
+        "id": "retrieve",
+        "terminal": false,
+        "reads": ["/query", "/phase"],
+        "writes": ["/phase", "/retrieval_result"]
+      },
+      {
+        "id": "done",
+        "terminal": true,
+        "reads": [
+          "/phase",
+          "/llm_result",
+          "/tool_result",
+          "/retrieval_result"
+        ],
+        "writes": []
+      }
+    ],
+    "transitions": [
+      {
+        "id": "t1",
+        "from": "prepare",
+        "route": "continue",
+        "to": "llm"
+      },
+      {
+        "id": "t2",
+        "from": "llm",
+        "route": "continue",
+        "to": "tool"
+      },
+      {
+        "id": "t3",
+        "from": "tool",
+        "route": "continue",
+        "to": "retrieve"
+      },
+      {
+        "id": "t4",
+        "from": "retrieve",
+        "route": "continue",
+        "to": "done"
+      }
+    ],
+    "cycles": [],
+    "limits": {
+      "max_steps": 20,
+      "max_tokens": 10000,
+      "max_cost_micros": 100000,
+      "timeout_ms": 60000
+    }
+  },
+  "schema": {
+    "version": 1,
+    "id": "effects-state",
+    "paths": {
+      "/phase": "String",
+      "/prompt": "String",
+      "/tool_id": "String",
+      "/tool_args": "Object",
+      "/query": "String",
+      "/llm_result": "Object",
+      "/tool_result": "Object",
+      "/retrieval_result": "Object"
+    },
+    "required": ["/phase", "/prompt"]
+  }
+}

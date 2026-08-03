@@ -45,8 +45,11 @@ package never silently falls back to another engine. Tool calls, retrieval, and
 durable effects remain host-bound or Rust/WASM integrations.
 
 The package also exports pack references, replay validation, checkpoint/HITL
-contracts, Cortex and ClaimGraph injection interfaces, and multi-agent authority
-helpers. See the repository [examples](../../examples/typescript/complete.ts) and
+contracts, Cortex and ClaimGraph injection interfaces, multi-agent authority
+helpers, and an **ICP canister client** (`IcpAgentRuntimeClient` + candid-aligned
+DTOs). The ICP client does not hard-depend on `@dfinity/agent`; pass an actor
+built from your dfx declarations for live calls. See
+[`examples/icp-agent-canister/`](../../examples/icp-agent-canister/) and
 [architecture documentation](../../docs/architecture/README.md).
 
 ## Development

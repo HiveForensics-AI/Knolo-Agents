@@ -1,0 +1,8 @@
+{
+  "schema_id": "counter-state",
+  "revision": 0,
+  "value": {
+    "count": 0
+  },
+  "provenance": null
+}

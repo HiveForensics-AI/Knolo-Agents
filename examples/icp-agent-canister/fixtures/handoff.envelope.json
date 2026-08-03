@@ -1,0 +1,14 @@
+{
+  "version": 1,
+  "destination": "portable-counter",
+  "state_projection": {
+    "/count": "/count"
+  },
+  "authority_projection": {
+    "capabilities": [],
+    "namespaces": [],
+    "max_steps": 5,
+    "max_cost_micros": 100
+  },
+  "return_contract": "counter-return-v1"
+}
