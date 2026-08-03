@@ -71,8 +71,10 @@ mod tests {
 
     #[test]
     fn allowlist_enforced() {
-        let mut limits = RuntimeLimitsV1::default();
-        limits.allowed_callers = vec!["aaaaa-aa".into()];
+        let limits = RuntimeLimitsV1 {
+            allowed_callers: vec!["aaaaa-aa".into()],
+            ..RuntimeLimitsV1::default()
+        };
         let anon = Principal::anonymous();
         assert!(require_run_access(anon, false, &limits).is_err());
         assert!(require_run_access(anon, true, &limits).is_ok());

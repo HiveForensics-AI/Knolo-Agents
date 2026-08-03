@@ -483,8 +483,10 @@ mod tests {
             ..RuntimeLimitsV1::default()
         };
         persist_limits(&limits).unwrap();
-        let mut budget = HostBudgetSnapshotV1::default();
-        budget.tool_calls = 3;
+        let budget = HostBudgetSnapshotV1 {
+            tool_calls: 3,
+            ..HostBudgetSnapshotV1::default()
+        };
         persist_budget(&budget).unwrap();
         let snap = load_snapshot().unwrap();
         assert_eq!(snap.limits.max_concurrent_executions, 4);

@@ -255,7 +255,7 @@ examples, evaluation harnesses, and pre-1.0 API freeze work.
 
 Knolo Agents is deliberately **not** trying to become:
 
-- A LangChain-style provider/orchestration framework with implicit tool discovery
+- A provider/orchestration framework with implicit tool discovery
   or hidden network access.
 - A model provider, vector database, job queue, or application data layer.
 - A place that vendors, re-exports, or ships `@knolo/core` storage
