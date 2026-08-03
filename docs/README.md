@@ -4,5 +4,6 @@
 - [Packs](packs.md), [policy](policy-enforcement.md), and [tools](tools.md)
 - [Retrieval](retrieval.md) and the [`@knolo/core` boundary](core-boundary.md)
 - [Checkpoints](checkpoints.md), [replay](replay.md), and [WASM](wasm.md)
+- [ICP agent runtime ADR](architecture/adr-001-icp-agent-runtime.md) and [constraints matrix](architecture/icp-constraints-matrix.md)
 - [Security model](security.md), [compatibility](compatibility.md), and [releases](releasing.md)
 - [Repository audit](repository-audit.md)

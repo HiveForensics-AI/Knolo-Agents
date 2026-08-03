@@ -31,6 +31,7 @@ job queue, or application-specific data layer.
 | `knolo-agent-core` | Portable contracts, graph/state validation, policy types, events, replay, checkpoints, and pack declarations. |
 | `knolo-agent` | Native Rust scheduler, host effect boundaries, policy enforcement, pack loading, and durable runtime integrations. |
 | `knolo-agent-wasm` | Small JSON/WASM protocol adapter for embedding the portable contracts. Not currently published separately. |
+| `knolo-agent-icp` | ICP canister host for the control plane (Phase 1 PoC: deterministic graphs, checkpoints, events). Workspace-only. |
 | `@knolo/agents` | Typed TypeScript builders, the deterministic state/routing/suspension engine, and explicit WASM integration. |
 | `@knolo/core` | Separate peer dependency owned by the consumer; it can provide Cortex and ClaimGraph implementations. |
 
@@ -78,6 +79,7 @@ or WASM engine explicitly.
 
 - [Rust runtime examples](crates/knolo-agent/examples/)
 - [TypeScript example](examples/typescript/complete.ts)
+- [ICP agent runtime example](examples/icp-agent-canister/)
 - [Pack declarations](examples/packs/)
 - [Documentation index](docs/README.md)
 - [Release checklist](docs/releasing.md)

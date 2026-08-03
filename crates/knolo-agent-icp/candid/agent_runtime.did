@@ -1,0 +1,78 @@
+type HealthDto = record {
+  ok : bool;
+  message : text;
+};
+
+type InspectionDto = record {
+  ok : bool;
+  engine : text;
+  graph_loaded : bool;
+  graph_id : opt text;
+  graph_hash : opt text;
+  implementation_id : opt text;
+  execution_count : nat64;
+  capabilities : vec text;
+  limitations : vec text;
+  message : text;
+};
+
+type StatusDto = record {
+  kind : text;
+  detail : text;
+};
+
+type RunReportDto = record {
+  ok : bool;
+  execution_id : text;
+  status : StatusDto;
+  steps : nat64;
+  tokens : nat64;
+  cost_micros : nat64;
+  state_json : text;
+  event_count : nat64;
+  message : text;
+};
+
+type EventsDto = record {
+  ok : bool;
+  execution_id : text;
+  events_json : text;
+  message : text;
+};
+
+type CheckpointDto = record {
+  ok : bool;
+  execution_id : text;
+  present : bool;
+  checkpoint_json : text;
+  message : text;
+};
+
+type BudgetDto = record {
+  ok : bool;
+  tool_calls : nat64;
+  tool_units : nat64;
+  llm_calls : nat64;
+  retrieval_calls : nat64;
+  effect_rounds : nat64;
+  knolo_steps : nat64;
+  knolo_tokens : nat64;
+  knolo_cost_micros : nat64;
+  cycles_spent_observed : nat64;
+  last_cycles_balance : opt nat64;
+  message : text;
+};
+
+service : {
+  health : () -> (HealthDto) query;
+  inspect : () -> (InspectionDto) query;
+  get_budget : () -> (BudgetDto) query;
+  load_definition : (text) -> (HealthDto);
+  clear_definition : () -> (HealthDto);
+  start_execution : (text, text) -> (RunReportDto);
+  step : (text, nat32) -> (RunReportDto);
+  resume : (text) -> (RunReportDto);
+  continue_effects : (text) -> (RunReportDto);
+  get_events : (text) -> (EventsDto) query;
+  get_checkpoint : (text) -> (CheckpointDto) query;
+}

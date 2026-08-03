@@ -17,12 +17,20 @@ generated/
 **/wasm-bindgen/
 **/*.wasm
 
+# ICP / dfx local replica state
+.dfx/
+**/.dfx/
+
 # Tool and editor state
 .idea/
 .vscode/
 .DS_Store
 *.swp
 *.swo
+
+# Local planning artifacts (session / accepted drafts)
+# Promote decisions to docs/architecture/ ADRs when ready to commit.
+.plans/
 
 # Local configuration and secrets
 .env
