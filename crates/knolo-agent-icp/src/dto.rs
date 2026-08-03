@@ -1,6 +1,8 @@
 //! Candid DTOs for the agent runtime canister surface.
 use crate::budget::HostBudgetSnapshotV1;
 use crate::engine::ExecutionRecord;
+use crate::limits::RuntimeLimitsV1;
+use crate::stable_store::StoreStats;
 use candid::CandidType;
 use serde::Deserialize;
 
@@ -21,6 +23,41 @@ pub struct InspectionDto {
     pub execution_count: u64,
     pub capabilities: Vec<String>,
     pub limitations: Vec<String>,
+    pub message: String,
+    pub schema_version: u32,
+    pub handoff_count: u64,
+}
+
+#[derive(CandidType, Deserialize, Clone, Debug, PartialEq, Eq)]
+pub struct LimitsDto {
+    pub ok: bool,
+    pub max_concurrent_executions: u32,
+    pub max_events_per_execution: u32,
+    pub max_execution_id_len: u32,
+    pub max_state_bytes: u32,
+    pub max_handoff_bytes: u32,
+    pub require_controller_for_runs: bool,
+    pub allowed_callers: Vec<String>,
+    pub min_cycles_reserve: u64,
+    pub message: String,
+}
+
+#[derive(CandidType, Deserialize, Clone, Debug, PartialEq, Eq)]
+pub struct StoreStatsDto {
+    pub ok: bool,
+    pub schema_version: u32,
+    pub execution_count: u64,
+    pub checkpoint_count: u64,
+    pub event_entry_count: u64,
+    pub handoff_count: u64,
+    pub has_definition: bool,
+    pub message: String,
+}
+
+#[derive(CandidType, Deserialize, Clone, Debug, PartialEq, Eq)]
+pub struct ExecutionListDto {
+    pub ok: bool,
+    pub execution_ids: Vec<String>,
     pub message: String,
 }
 
@@ -147,6 +184,55 @@ impl From<&HostBudgetSnapshotV1> for BudgetDto {
                 .last_cycles_balance
                 .map(|v| v.min(u64::MAX as u128) as u64),
             message: "budget snapshot".into(),
+        }
+    }
+}
+
+impl From<&RuntimeLimitsV1> for LimitsDto {
+    fn from(l: &RuntimeLimitsV1) -> Self {
+        Self {
+            ok: true,
+            max_concurrent_executions: l.max_concurrent_executions,
+            max_events_per_execution: l.max_events_per_execution,
+            max_execution_id_len: l.max_execution_id_len,
+            max_state_bytes: l.max_state_bytes,
+            max_handoff_bytes: l.max_handoff_bytes,
+            require_controller_for_runs: l.require_controller_for_runs,
+            allowed_callers: l.allowed_callers.clone(),
+            min_cycles_reserve: l.min_cycles_reserve.min(u64::MAX as u128) as u64,
+            message: "runtime limits".into(),
+        }
+    }
+}
+
+impl From<&StoreStats> for StoreStatsDto {
+    fn from(s: &StoreStats) -> Self {
+        Self {
+            ok: true,
+            schema_version: s.schema_version,
+            execution_count: s.execution_count,
+            checkpoint_count: s.checkpoint_count,
+            event_entry_count: s.event_entry_count,
+            handoff_count: s.handoff_count,
+            has_definition: s.has_definition,
+            message: "stable store stats".into(),
+        }
+    }
+}
+
+impl LimitsDto {
+    pub fn err(message: impl Into<String>) -> Self {
+        Self {
+            ok: false,
+            max_concurrent_executions: 0,
+            max_events_per_execution: 0,
+            max_execution_id_len: 0,
+            max_state_bytes: 0,
+            max_handoff_bytes: 0,
+            require_controller_for_runs: false,
+            allowed_callers: vec![],
+            min_cycles_reserve: 0,
+            message: message.into(),
         }
     }
 }

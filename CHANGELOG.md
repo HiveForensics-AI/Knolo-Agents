@@ -12,11 +12,11 @@ called out explicitly and may evolve without a crates.io release.
 
 ### Added
 
-#### ICP agent runtime (Phases 0–2)
+#### ICP agent runtime (Phases 0–4)
 
 - New workspace crate **`knolo-agent-icp`** (`publish = false`): Internet Computer
   canister host for the Knolo control plane (`ic-cdk` 0.17, Candid, `ic-llm` 1.1,
-  `ic-cdk-timers` 0.11).
+  `ic-cdk-timers` 0.11, `ic-stable-structures` 0.6).
 - **Phase 0 — discovery**
   - Architecture decision record:
     [`docs/architecture/adr-001-icp-agent-runtime.md`](docs/architecture/adr-001-icp-agent-runtime.md)
@@ -42,6 +42,26 @@ called out explicitly and may evolve without a crates.io release.
   - Effect drain API: `continue_effects`.
   - Host-effects fixture and implementation id `host-effects-v1`.
   - Release Wasm size ~1.52 MiB (Phase 2); Phase 1 baseline was ~1.20 MiB.
+- **Phase 3 — persistence, hardening, multi-agent handoff**
+  - Versioned **`ic-stable-structures`** schema v1: definition, pack meta,
+    executions, checkpoints, events, budget, runtime limits, handoffs.
+  - Upgrade flush/reload via MemoryManager (Phase 1–2 `stable_save` not migrated).
+  - Runtime limits + caller allowlist / controller-only runs (`set_limits`,
+    `get_limits`); concurrent execution and event log caps; cycles reserve.
+  - Multi-agent handoff: `accept_handoff`, `forward_handoff`, `get_handoff`
+    using `HandoffEnvelopeV1` authority narrowing.
+  - Ops queries: `get_store_stats`, `list_executions`.
+  - Security checklist:
+    [`docs/architecture/icp-security-checklist.md`](docs/architecture/icp-security-checklist.md).
+  - Release Wasm size ~1.80 MiB (`1882138` bytes).
+- **Phase 4 — DX, packaging, ecosystem**
+  - Scripts: [`scripts/icp/`](scripts/icp/) (`build`, `deploy-local`,
+    `load-definition`, `init-template`).
+  - TypeScript client: `IcpAgentRuntimeClient` + candid DTOs in `@knolo/agents`
+    (`packages/agents/src/icp/`); optional `@dfinity/*` peers for live actors.
+  - Cost guide:
+    [`docs/architecture/icp-cost-guide.md`](docs/architecture/icp-cost-guide.md).
+  - Handoff fixtures + `scripts/run-handoff.sh` in the dfx example.
 - Documentation cross-links in README, architecture index, WASM notes, and
   `FUTURE.md` platform target status.
 - Root `.gitignore` entries for `.plans/` (local planning notes) and `.dfx/`.
@@ -52,11 +72,12 @@ called out explicitly and may evolve without a crates.io release.
 - Browser `knolo-agent-wasm` remains a separate path from the ICP canister host.
 - Live LLM runs require a reachable LLM canister; pure deterministic graphs run
   without it.
-- Phase 3+ (not in this change): `ic-stable-structures`, production hardening,
-  multi-agent handoff, DX/CLI templates.
+- Optional later: factory topology, AgentForge registry, production HTTPS
+  transforms, mainnet ops runbooks beyond the checklist.
 
 ### Unchanged published crates
 
-- No intentional public API changes to `knolo-agent`, `knolo-agent-core`, or
-  `@knolo/agents` in this branch; version numbers remain as on `main` / prior
-  release line until a coordinated publish.
+- No intentional public API changes to `knolo-agent` or `knolo-agent-core` in
+  this branch. `@knolo/agents` gains additive ICP client exports (non-breaking).
+  Version numbers remain as on `main` / prior release line until a coordinated
+  publish.

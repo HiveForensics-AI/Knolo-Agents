@@ -232,15 +232,23 @@ examples, evaluation harnesses, and pre-1.0 API freeze work.
 - **What:** Host `knolo-agent-core` + scheduler inside an ICP canister so the
   canister is the Host: packs, checkpoints, events, tools, ic-llm / outcalls,
   and optional calls to knolo-core knowledge canisters.
-- **Status (Phase 0–2 landed):** Workspace crate `knolo-agent-icp`, ADR-001,
+- **Status (Phase 0–4 landed):** Workspace crate `knolo-agent-icp`, ADR-001,
   constraints matrix, deterministic Candid control plane, pack-gated tools,
   ic-llm suspend/resume, knowledge retrieval principal, timers for
   `auto_continue`, cycles + Knolo budget snapshot (`get_budget`),
-  `examples/icp-agent-canister` dfx smoke. Release Wasm ~1.52 MiB.
-- **Next (Phase 3+):** `ic-stable-structures` upgrade-safe schemas, security
-  hardening, multi-agent handoff, DX/CLI templates.
+  **Phase 3:** `ic-stable-structures` schema v1 (definition, pack meta,
+  executions, checkpoints, events, budget, limits, handoffs), controller/run
+  auth, DoS limits, multi-agent `accept_handoff` / `forward_handoff`, security
+  checklist. **Phase 4:** `scripts/icp/*` (build/deploy/load/init-template),
+  `@knolo/agents` `IcpAgentRuntimeClient`, cost guide, expanded dfx example.
+  Release Wasm ~1.80 MiB (Phase 3).
+- **Optional later:** AgentForge-style registry, factory-per-agent topology,
+  HTTPS outcall production transforms, mainnet ops runbooks beyond the
+  checklist.
 - **Docs:** `docs/architecture/adr-001-icp-agent-runtime.md`,
-  `docs/architecture/icp-constraints-matrix.md`. Local planning notes in
+  `docs/architecture/icp-constraints-matrix.md`,
+  `docs/architecture/icp-cost-guide.md`,
+  `docs/architecture/icp-security-checklist.md`. Local planning notes in
   `.plans/` (gitignored).
 
 ## Explicit non-goals (for now)

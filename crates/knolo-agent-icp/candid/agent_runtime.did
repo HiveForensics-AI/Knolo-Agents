@@ -14,6 +14,8 @@ type InspectionDto = record {
   capabilities : vec text;
   limitations : vec text;
   message : text;
+  schema_version : nat32;
+  handoff_count : nat64;
 };
 
 type StatusDto = record {
@@ -63,16 +65,62 @@ type BudgetDto = record {
   message : text;
 };
 
+type LimitsDto = record {
+  ok : bool;
+  max_concurrent_executions : nat32;
+  max_events_per_execution : nat32;
+  max_execution_id_len : nat32;
+  max_state_bytes : nat32;
+  max_handoff_bytes : nat32;
+  require_controller_for_runs : bool;
+  allowed_callers : vec text;
+  min_cycles_reserve : nat64;
+  message : text;
+};
+
+type StoreStatsDto = record {
+  ok : bool;
+  schema_version : nat32;
+  execution_count : nat64;
+  checkpoint_count : nat64;
+  event_entry_count : nat64;
+  handoff_count : nat64;
+  has_definition : bool;
+  message : text;
+};
+
+type ExecutionListDto = record {
+  ok : bool;
+  execution_ids : vec text;
+  message : text;
+};
+
+type HandoffDto = record {
+  ok : bool;
+  handoff_id : text;
+  execution_id : text;
+  destination : text;
+  status : text;
+  message : text;
+};
+
 service : {
   health : () -> (HealthDto) query;
   inspect : () -> (InspectionDto) query;
   get_budget : () -> (BudgetDto) query;
+  get_limits : () -> (LimitsDto) query;
+  get_store_stats : () -> (StoreStatsDto) query;
+  list_executions : () -> (ExecutionListDto) query;
   load_definition : (text) -> (HealthDto);
   clear_definition : () -> (HealthDto);
+  set_limits : (nat32, nat32, nat32, bool, vec text, nat64) -> (LimitsDto);
   start_execution : (text, text) -> (RunReportDto);
   step : (text, nat32) -> (RunReportDto);
   resume : (text) -> (RunReportDto);
   continue_effects : (text) -> (RunReportDto);
+  accept_handoff : (text, text, text, text) -> (HandoffDto);
+  forward_handoff : (text, text, text, text, text) -> (HandoffDto);
+  get_handoff : (text) -> (HandoffDto) query;
   get_events : (text) -> (EventsDto) query;
   get_checkpoint : (text) -> (CheckpointDto) query;
 }

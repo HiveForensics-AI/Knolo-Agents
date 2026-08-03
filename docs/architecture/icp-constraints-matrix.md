@@ -19,11 +19,12 @@ payload or scheduler cost changes.
 | --- | --- | --- |
 | knolo-core knowledge canister Wasm (baseline) | ~860 KiB release | Size baseline from sibling project. |
 | `knolo-agent-icp` release Wasm (Phase 1) | ~1.20 MiB | Baseline before effects. |
-| `knolo-agent-icp` release Wasm (Phase 2) | **~1.52 MiB** (`1592236` bytes) | Includes ic-llm + timers; re-measure after Phase 3. |
+| `knolo-agent-icp` release Wasm (Phase 2) | ~1.52 MiB (`1592236` bytes) | Includes ic-llm + timers. |
+| `knolo-agent-icp` release Wasm (Phase 3) | **~1.80 MiB** (`1882138` bytes) | + `ic-stable-structures` 0.6 + handoff/hardening. |
 | Definition ingress | Soft cap **2 MiB** (`MAX_DEFINITION_BYTES`) | Same order as knolo-core `MAX_PACK_BYTES`. |
 | Update instruction limit | Replica-enforced | Prefer `step` slicing + checkpoints for long graphs (Phase 1 supports step budget via engine). |
-| Query vs update | Queries free of consensus write | `inspect`, `get_events`, `get_checkpoint`, `health` are queries. |
-| Stable memory (Phase 1) | Coarse `stable_save` of definition + executions JSON | Fine for PoC; upgrade to `ic-stable-structures` in Phase 3. |
+| Query vs update | Queries free of consensus write | `inspect`, `get_events`, `get_checkpoint`, `get_budget`, `get_limits`, `get_store_stats`, `list_executions`, `get_handoff`, `health` are queries. |
+| Stable memory (Phase 3) | **`ic-stable-structures`** schema v1 (definition, pack meta, executions, checkpoints, events, budget, limits, handoffs) | Upgrade-safe maps; Phase 1–2 `stable_save` not migrated. |
 
 ## Cost / latency (qualitative Phase 0)
 
@@ -45,8 +46,8 @@ Phase 2–3; Phase 1 enforces graph `ExecutionLimitsV1` only.
 | Soft payload size cap | `MAX_PACK_BYTES` | `MAX_DEFINITION_BYTES` |
 | Candid DTOs + health | knowledge canister | agent runtime DID |
 | dfx custom canister build | `examples/icp-knowledge-canister` | `examples/icp-agent-canister` |
-| CLI `knolo icp …` | `@knolo/cli` | Phase 4 for agents |
-| pre/post_upgrade snapshot | knowledge canister | Phase 1; improve Phase 3 |
+| CLI `knolo icp …` | `@knolo/cli` | Agents: `scripts/icp/*` + scaffold; TS client in `@knolo/agents` |
+| pre/post_upgrade + stable structures | knowledge still snapshot | Agent runtime: MemoryManager + versioned maps (Phase 3) |
 
 ## Risks tracked
 
@@ -54,7 +55,7 @@ Phase 2–3; Phase 1 enforces graph `ExecutionLimitsV1` only.
 | --- | --- |
 | Wasm size blow-up | Monitor release Wasm of `knolo-agent-icp`; keep effects out of Phase 1. |
 | Instruction limit on deep graphs | Step slice + resume; graph `max_steps`. |
-| Upgrade of rich state | Phase 3 stable structures. |
+| Upgrade of rich state | Phase 3 stable structures landed; re-test on each Wasm bump. |
 | Divergence from native | Shared fixtures + unit tests in `knolo-agent-icp`. |
 
 ## Measurement commands

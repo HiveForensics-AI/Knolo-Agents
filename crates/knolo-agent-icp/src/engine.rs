@@ -2,7 +2,11 @@
 use crate::budget::HostBudgetTracker;
 use crate::definition::LoadedDefinition;
 use crate::executor::{is_host_effect_suspend, DeterministicExecutor};
+use crate::handoff::{
+    authority_from_pack, parse_and_validate_envelope, parse_authority, HandoffRecordV1,
+};
 use crate::host::{empty_sink, empty_store, fixed_clock};
+use crate::limits::{PackMetaV1, RuntimeLimitsV1};
 use crate::tools_host::{default_registry, execute_tool_call};
 use knolo_agent::host::ToolRegistry;
 use knolo_agent::runtime::{
@@ -33,6 +37,9 @@ pub struct ExecutionRecord {
     pub effect_cache: BTreeMap<String, Value>,
     #[serde(default)]
     pub timer_scheduled: bool,
+    /// Optional handoff that created this execution.
+    #[serde(default)]
+    pub handoff_id: Option<String>,
 }
 
 #[derive(Default)]
@@ -42,6 +49,9 @@ pub struct AgentEngine {
     pub store: knolo_agent::checkpoint::InMemoryCheckpointStore,
     pub budget: HostBudgetTracker,
     pub tools: ToolRegistry,
+    pub limits: RuntimeLimitsV1,
+    pub pack_meta: Option<PackMetaV1>,
+    pub handoffs: BTreeMap<String, HandoffRecordV1>,
 }
 
 impl AgentEngine {
@@ -53,8 +63,18 @@ impl AgentEngine {
             loaded.compiled.definition().id,
             loaded.bundle.implementation_id
         );
+        self.pack_meta = Some(PackMetaV1 {
+            pack_hash: loaded.bundle.pack_hash.clone(),
+            policy_hash: loaded.bundle.policy_hash.clone(),
+            contract_hash: loaded.bundle.contract_hash.clone(),
+            graph_id: loaded.compiled.definition().id.to_string(),
+            graph_hash: loaded.compiled.hash().into(),
+            implementation_id: loaded.bundle.implementation_id.clone(),
+            pack_id: loaded.bundle.pack.as_ref().map(|p| p.id.to_string()),
+        });
         self.definition = Some(loaded);
         self.executions.clear();
+        self.handoffs.clear();
         self.store = empty_store();
         self.budget = HostBudgetTracker::default();
         self.tools = default_registry(allow_https);
@@ -64,6 +84,8 @@ impl AgentEngine {
     pub fn clear_definition(&mut self) -> String {
         let had = self.definition.take().is_some();
         self.executions.clear();
+        self.handoffs.clear();
+        self.pack_meta = None;
         self.store = empty_store();
         self.budget = HostBudgetTracker::default();
         self.tools = ToolRegistry::default();
@@ -78,26 +100,122 @@ impl AgentEngine {
         self.definition.as_ref().and_then(|d| d.policy.as_ref())
     }
 
-    pub fn start_execution(
-        &mut self,
-        execution_id: &str,
-        initial_state_json: &str,
-    ) -> Result<ExecutionRecord, CoreError> {
-        let state = parse_state(initial_state_json)?;
-        let id = ExecutionId::from_str(execution_id)
-            .map_err(|e| CoreError::Host(format!("invalid execution_id: {e}")))?;
+    pub fn set_limits(&mut self, limits: RuntimeLimitsV1) -> Result<(), CoreError> {
+        if limits.version != 1 {
+            return Err(CoreError::Host(format!(
+                "unsupported limits version {}",
+                limits.version
+            )));
+        }
+        if limits.max_concurrent_executions == 0 {
+            return Err(CoreError::Host(
+                "max_concurrent_executions must be > 0".into(),
+            ));
+        }
+        self.limits = limits;
+        Ok(())
+    }
+
+    fn guard_new_execution(&self, execution_id: &str, state_json: &str) -> Result<(), CoreError> {
+        self.limits
+            .validate_execution_id(execution_id)
+            .map_err(CoreError::Host)?;
+        self.limits
+            .validate_state_bytes(state_json)
+            .map_err(CoreError::Host)?;
+        self.limits
+            .check_capacity(self.executions.len())
+            .map_err(CoreError::Host)?;
         if self.executions.contains_key(execution_id) {
             return Err(CoreError::Host(format!(
                 "execution '{execution_id}' already exists"
             )));
         }
+        Ok(())
+    }
+
+    pub fn start_execution(
+        &mut self,
+        execution_id: &str,
+        initial_state_json: &str,
+    ) -> Result<ExecutionRecord, CoreError> {
+        self.guard_new_execution(execution_id, initial_state_json)?;
+        let state = parse_state(initial_state_json)?;
+        let id = ExecutionId::from_str(execution_id)
+            .map_err(|e| CoreError::Host(format!("invalid execution_id: {e}")))?;
         let report = self.run_from_start(&id, state, None, BTreeMap::new())?;
-        let record = self.record_from_report(execution_id, report, BTreeMap::new())?;
+        let mut record = self.record_from_report(execution_id, report, BTreeMap::new())?;
+        self.apply_event_cap(&mut record);
         self.budget
             .sync_run_totals(record.steps, record.tokens, record.cost_micros);
         self.executions
             .insert(execution_id.to_owned(), record.clone());
         Ok(record)
+    }
+
+    /// Accept a narrowed multi-agent handoff and start a local execution.
+    pub fn accept_handoff(
+        &mut self,
+        execution_id: &str,
+        envelope_json: &str,
+        state_json: &str,
+        parent_authority_json: &str,
+    ) -> Result<(ExecutionRecord, HandoffRecordV1), CoreError> {
+        self.guard_new_execution(execution_id, state_json)?;
+        let def = self
+            .definition
+            .as_ref()
+            .ok_or_else(|| CoreError::Host("no definition loaded".into()))?;
+        let graph_limits = &def.compiled.definition().limits;
+        let pack_auth = authority_from_pack(
+            def.bundle.pack.as_ref(),
+            graph_limits.max_steps,
+            graph_limits.max_cost_micros,
+        );
+        let parent = parse_authority(parent_authority_json)?;
+        let envelope =
+            parse_and_validate_envelope(envelope_json, &parent, &pack_auth, &self.limits)?;
+
+        // Destination must match the loaded graph (this runtime hosts one graph).
+        let loaded_id = def.compiled.definition().id.as_str();
+        if envelope.destination.as_str() != loaded_id {
+            return Err(CoreError::Host(format!(
+                "handoff destination '{}' does not match loaded graph '{loaded_id}'",
+                envelope.destination
+            )));
+        }
+
+        let handoff_id = format!("handoff-{execution_id}");
+        let state = parse_state(state_json)?;
+        let id = ExecutionId::from_str(execution_id)
+            .map_err(|e| CoreError::Host(format!("invalid execution_id: {e}")))?;
+        let report = self.run_from_start(&id, state, None, BTreeMap::new())?;
+        let mut record = self.record_from_report(execution_id, report, BTreeMap::new())?;
+        record.handoff_id = Some(handoff_id.clone());
+        self.apply_event_cap(&mut record);
+        self.budget
+            .sync_run_totals(record.steps, record.tokens, record.cost_micros);
+        self.executions
+            .insert(execution_id.to_owned(), record.clone());
+
+        let hrecord = HandoffRecordV1 {
+            version: 1,
+            handoff_id: handoff_id.clone(),
+            execution_id: execution_id.into(),
+            destination: envelope.destination.to_string(),
+            return_contract: envelope.return_contract.clone(),
+            parent_authority: parent,
+            child_authority: envelope.authority_projection.clone(),
+            status: "accepted".into(),
+            peer_canister: None,
+            message: "handoff accepted; execution started".into(),
+        };
+        self.handoffs.insert(handoff_id, hrecord.clone());
+        Ok((record, hrecord))
+    }
+
+    fn apply_event_cap(&self, record: &mut ExecutionRecord) {
+        self.limits.truncate_events_if_needed(&mut record.events);
     }
 
     pub fn step(
@@ -456,6 +574,7 @@ impl AgentEngine {
                         pending_resume: None,
                         effect_cache: effect_cache.clone(),
                         timer_scheduled: false,
+                        handoff_id: None,
                     },
                 )
                 .ok()
@@ -463,7 +582,7 @@ impl AgentEngine {
         } else {
             None
         };
-        Ok(ExecutionRecord {
+        let mut record = ExecutionRecord {
             execution_id: execution_id.into(),
             status_kind,
             status_detail,
@@ -476,7 +595,10 @@ impl AgentEngine {
             pending_resume,
             effect_cache,
             timer_scheduled: false,
-        })
+            handoff_id: None,
+        };
+        self.apply_event_cap(&mut record);
+        Ok(record)
     }
 
     fn merge_step_report(
@@ -518,6 +640,7 @@ impl AgentEngine {
                         pending_resume: None,
                         effect_cache: previous.effect_cache.clone(),
                         timer_scheduled: false,
+                        handoff_id: previous.handoff_id.clone(),
                     },
                 )
                 .ok();
@@ -532,7 +655,7 @@ impl AgentEngine {
             events.push(e);
         }
 
-        Ok(ExecutionRecord {
+        let mut record = ExecutionRecord {
             execution_id: execution_id.into(),
             status_kind,
             status_detail,
@@ -545,7 +668,10 @@ impl AgentEngine {
             pending_resume,
             effect_cache: previous.effect_cache.clone(),
             timer_scheduled: false,
-        })
+            handoff_id: previous.handoff_id.clone(),
+        };
+        self.apply_event_cap(&mut record);
+        Ok(record)
     }
 }
 
@@ -586,21 +712,18 @@ pub fn start_with_budget(
     initial_state_json: &str,
     max_node_steps: u32,
 ) -> Result<ExecutionRecord, CoreError> {
+    engine.guard_new_execution(execution_id, initial_state_json)?;
     let state = parse_state(initial_state_json)?;
     let id = ExecutionId::from_str(execution_id)
         .map_err(|e| CoreError::Host(format!("invalid execution_id: {e}")))?;
-    if engine.executions.contains_key(execution_id) {
-        return Err(CoreError::Host(format!(
-            "execution '{execution_id}' already exists"
-        )));
-    }
     let budget = if max_node_steps == 0 {
         None
     } else {
         Some(max_node_steps)
     };
     let report = engine.run_from_start(&id, state, budget, BTreeMap::new())?;
-    let record = engine.record_from_report(execution_id, report, BTreeMap::new())?;
+    let mut record = engine.record_from_report(execution_id, report, BTreeMap::new())?;
+    engine.apply_event_cap(&mut record);
     engine
         .executions
         .insert(execution_id.to_owned(), record.clone());
