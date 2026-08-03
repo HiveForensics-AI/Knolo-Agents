@@ -22,7 +22,7 @@ jobs:
     strategy: { matrix: { task: [format-lint, unit, conformance, package] } }
     steps:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
-      - uses: actions/setup-node@1e60f620b9541dca151540becc8114408c7e2c4a
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
         with: { node-version: 20, cache: pnpm }
       - run: corepack enable && pnpm install --frozen-lockfile
       - run: |
@@ -44,7 +44,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
-      - uses: actions/setup-node@1e60f620b9541dca151540becc8114408c7e2c4a
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
         with: { node-version: 20 }
       - run: ./scripts/hygiene.sh
       - run: node scripts/check-links.mjs
