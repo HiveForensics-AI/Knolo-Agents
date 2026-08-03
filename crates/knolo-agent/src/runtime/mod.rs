@@ -211,7 +211,7 @@ impl<'a, E: NodeExecutor, S: EventSink, C: Clock, K: CheckpointStore> Scheduler<
                     EventKindV1::NodeStarted { attempt },
                     &mut events,
                 )?;
-                let x = self.executor.execute(NodeRequest {
+                let execution = self.executor.execute(NodeRequest {
                     node_id: &node,
                     state: &state,
                     attempt,
@@ -219,7 +219,7 @@ impl<'a, E: NodeExecutor, S: EventSink, C: Clock, K: CheckpointStore> Scheduler<
                 if let NodeOutcomeV1::Fail {
                     error,
                     retryable: true,
-                } = &x.outcome
+                } = &execution.outcome
                 {
                     if attempt <= self.policy.max_retries {
                         self.event(
@@ -236,7 +236,7 @@ impl<'a, E: NodeExecutor, S: EventSink, C: Clock, K: CheckpointStore> Scheduler<
                     let error = error.clone();
                     return self.fail(id, node, state, events, seq, steps, tokens, cost, &error);
                 }
-                break x;
+                break execution;
             };
             steps += 1;
             tokens = tokens.saturating_add(execution.tokens);
