@@ -49,6 +49,7 @@ macro_rules! identifier {
     };
 }
 identifier!(GraphId);
+identifier!(AgentId);
 identifier!(NodeId);
 identifier!(TransitionId);
 identifier!(ExecutionId);

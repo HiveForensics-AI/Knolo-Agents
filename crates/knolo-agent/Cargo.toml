@@ -16,3 +16,4 @@ categories = ["development-tools"]
 knolo-agent-core.workspace = true
 serde.workspace = true
 serde_json.workspace = true
+reqwest.workspace = true

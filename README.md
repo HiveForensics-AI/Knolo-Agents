@@ -603,10 +603,47 @@ WASM notes: [docs/wasm.md](docs/wasm.md).
 ### Rust
 
 ```bash
+cargo install --path crates/knolo-agent --bin knolo
+knolo init
+knolo agent list
+knolo run --agent coding "list files"
 cargo test --workspace
 cargo run -p knolo-agent --example pack_e2e
 cargo run -p knolo-agent --example complete
 ```
+
+Use `knolo run --headless` for JSON output in scripts and CI. See
+[docs/install.md](docs/install.md) for the shell installer and local-model
+setup, and [docs/cli.md](docs/cli.md) for profile creation, approvals, and
+model-backed task execution.
+
+### Product commands
+
+```bash
+# Create a profile and inspect its authority
+knolo agent create --template coding my-coder
+knolo agent inspect my-coder
+
+# Configure a local OpenAI-compatible model
+knolo model add local --provider ollama --model qwen2.5-coder:7b \
+  --base-url http://127.0.0.1:11434/v1
+knolo agent set-model my-coder local
+
+# Run interactively or as JSON for automation
+knolo run --agent my-coder "list files"
+knolo run --agent my-coder --headless "read README.md"
+
+# Resume or stop a persisted session
+knolo session list
+knolo session logs <session-id>
+knolo session resume <session-id>
+knolo session stop <session-id>
+```
+
+Write actions require explicit approval. A configured model produces plans
+through the OpenAI-compatible adapter; a custom host executable can still be
+supplied with `--plan-command`. The runtime enforces capabilities, approvals,
+path safety, and autonomy limits around every returned action.
 
 `pack_e2e` loads a native pack fixture, proves an allowed and denied tool call,
 and checks deterministic control-plane replay.
@@ -666,6 +703,7 @@ More context: [examples/README.md](examples/README.md).
 │   ├── packs/                # .knolo authority declarations
 │   ├── typescript/           # TS end-to-end sample
 │   └── icp-agent-canister/   # dfx project + fixtures + scripts
+├── knolo-product/            # adapted product-runtime harness source
 ├── docs/                     # Architecture and subsystem docs
 ├── scripts/
 │   ├── hygiene.sh

@@ -4,6 +4,7 @@ use std::fmt;
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum CoreError {
     InvalidIdentifier(String),
+    InvalidProfile(String),
     InvalidGraph(String),
     InvalidPatch(String),
     RevisionConflict { expected: u64, actual: u64 },

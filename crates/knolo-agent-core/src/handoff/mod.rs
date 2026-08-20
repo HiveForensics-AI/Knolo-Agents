@@ -1,6 +1,7 @@
 //! Inspectable, versioned contracts for subgraph delegation.
-use crate::{CoreError, GraphId};
+use crate::{AgentId, CoreError, ExecutionId, GraphId};
 use serde::{Deserialize, Serialize};
+use serde_json::Value;
 use std::collections::{BTreeMap, BTreeSet};
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, Default)]
@@ -47,4 +48,43 @@ impl HandoffEnvelopeV1 {
         }
         self.authority_projection.narrowed_by(parent, pack)
     }
+}
+
+/// Parent/child run metadata around a narrowed handoff. The envelope remains
+/// the authority boundary; this wrapper supplies accountability and deadlines.
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct DelegationRequestV1 {
+    pub version: u16,
+    pub parent_run_id: ExecutionId,
+    pub child_run_id: ExecutionId,
+    pub parent_profile_id: AgentId,
+    pub child_profile_id: AgentId,
+    pub task: String,
+    pub deadline_ms: u64,
+    pub envelope: HandoffEnvelopeV1,
+}
+
+impl DelegationRequestV1 {
+    pub fn validate(&self, parent: &AuthorityV1, pack: &AuthorityV1) -> Result<(), CoreError> {
+        if self.version != 1
+            || self.task.trim().is_empty()
+            || self.deadline_ms == 0
+            || self.parent_run_id == self.child_run_id
+        {
+            return Err(CoreError::InvalidGraph("invalid delegation request".into()));
+        }
+        self.envelope.validate(parent, pack)
+    }
+}
+
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct DelegationResultV1 {
+    pub version: u16,
+    pub parent_run_id: ExecutionId,
+    pub child_run_id: ExecutionId,
+    pub status: String,
+    pub result: Option<Value>,
+    pub error: Option<String>,
 }

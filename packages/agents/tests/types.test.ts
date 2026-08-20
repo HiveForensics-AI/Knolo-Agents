@@ -1,6 +1,8 @@
-import { Agent, defineAgent, entry, node, stateSchema, terminal, transition, type AssertEngineCapabilities, type StateOf } from "../src/index.js";
+import { Agent, builtinAgentProfile, defineAgent, entry, node, stateSchema, terminal, transition, type AssertEngineCapabilities, type StateOf } from "../src/index.js";
 
 const schema = stateSchema("state", { count: "Number", label: { type: "String", optional: true } });
+const profile = builtinAgentProfile("coding");
+profile.autonomy.maxTurns satisfies number;
 type State = StateOf<typeof schema>;
 const increment = node<State, "increment">("increment", { writes: ["count"], run: () => ({ outcome: { type: "continue", patch: { count: 1 } } }) });
 const done = terminal<State, "done">("done", { run: () => ({ outcome: { type: "terminate", result: null } }) });
