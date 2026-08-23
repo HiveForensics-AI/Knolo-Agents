@@ -1,6 +1,6 @@
-# Contributing to the Knolo product runtime
+# Contributing to Knolo Agent
 
-The parent repository is the Knolo product workspace. Changes to this runtime
+The parent repository is the Knolo Agents workspace. Changes to this runtime
 source must integrate with the contracts, policy, packs, event model,
 checkpoints, and host boundaries documented in the parent `docs/` directory.
 
@@ -31,6 +31,6 @@ workspace to the parent Cargo workspace without an architecture decision.
 ## Product naming
 
 User-facing names, installation commands, help text, examples, and telemetry
-must use Knolo. Historical upstream identifiers may remain temporarily in
-internal module paths when required to stage the extraction; they must not be
-presented as the public product identity.
+must use Knolo Agent and the `knolo` executable. Historical upstream
+identifiers may remain temporarily in internal module paths when required for
+provenance; they must not be presented as the public product identity.

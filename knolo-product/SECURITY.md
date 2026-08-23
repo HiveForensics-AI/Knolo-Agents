@@ -1,4 +1,4 @@
-# Knolo product runtime security
+# Knolo Agent implementation security
 
 Report vulnerabilities through the security process in the parent repository’s
 [`SECURITY.md`](../SECURITY.md). Do not publish credentials, exploit details,

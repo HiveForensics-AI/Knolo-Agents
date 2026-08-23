@@ -1,11 +1,12 @@
-# Knolo Product Runtime
+# Knolo Agent
 
-This directory contains the Rust harness source being adapted into the Knolo
-product. Knolo is the product name; the historical upstream crate identifiers
-inside this source tree are implementation provenance and are not public
-product names.
+Knolo Agent is a governed, inspectable agent runtime for bounded work on a
+local workspace or an integrated host. It turns a user request into a
+controlled sequence of planning, authorization, action, observation, and
+verification. Every run is constrained by the agent profile, granted
+capabilities, workspace scope, budgets, and approval requirements.
 
-The supported user entry point is the Knolo CLI in the parent workspace:
+The public entry point is the `knolo` CLI:
 
 ```bash
 cargo install --path ../crates/knolo-agent --bin knolo
@@ -16,16 +17,113 @@ knolo run --agent coding "list files"
 
 From the parent repository, see:
 
-- [`README.md`](../README.md) — product overview and workspace quickstart;
-- [`docs/cli.md`](../docs/cli.md) — installation, profiles, tasks, approvals,
-  sessions, and model planner adapters;
-- [`docs/migration/README.md`](../docs/migration/README.md) — the eight-phase
-  harness migration and productization plan.
+- [`README.md`](../README.md) — Knolo Agents architecture and workspace
+  quickstart;
+- [`docs/cli.md`](../docs/cli.md) — CLI commands, profiles, approvals,
+  sessions, and model adapters;
+- [`docs/install.md`](../docs/install.md) — installation and model setup;
+- [`examples/README.md`](examples/README.md) — release examples for standalone
+  and integrated use.
+
+## Examples
+
+Knolo Agent can run as a standalone CLI or as part of the wider Knolo Agents
+platform. The product name is **Knolo Agent**; `knolo-product/` is only the
+repository path for the implementation source held in this workspace.
+
+### Standalone CLI
+
+Install the `knolo` executable from the repository root and initialize a local
+profile store:
+
+```bash
+sh install.sh
+knolo init
+knolo agent list
+knolo agent create --template coding coding-agent
+knolo agent inspect coding-agent
+knolo run --agent coding-agent "inspect the workspace and report what needs attention"
+```
+
+Read-only tasks can run without write approval. A write task requires explicit
+approval:
+
+```bash
+knolo run --agent coding-agent --yes "create a short TODO.md for this project"
+knolo session replay <run-id>
+knolo session export <run-id>
+```
+
+This standalone mode uses the native Knolo runtime and local workspace host. It
+does not require a separate `@knolo/core` installation or a remote service.
+
+### Knolo Agent with the Knolo Agents platform
+
+Knolo Agent is part of the Knolo Agents platform boundary. The native runtime
+owns execution, policy, packs, events, checkpoints, replay, and host effect
+authorization. The TypeScript package exposes typed builders and client
+interfaces, while `@knolo/core` can provide Cortex and ClaimGraph capabilities
+as an optional peer dependency.
+
+```text
+agent definition → profile and pack → Knolo Agent runtime → host effects
+                                      ↓
+                         events, checkpoints, replay, report
+```
+
+The workspace integration is available from the parent repository:
+
+```bash
+cargo install --path crates/knolo-agent --bin knolo
+pnpm install --frozen-lockfile
+pnpm --filter @knolo/agents check
+```
+
+For a TypeScript agent definition, see
+[`examples/typescript/complete.ts`](../examples/typescript/complete.ts). For
+portable packs and native policy examples, see
+[`examples/packs/`](../examples/packs/).
+
+### Model-backed execution
+
+Knolo Agent accepts OpenAI-compatible model endpoints. Credentials remain in
+the environment; Knolo stores only the name of the environment variable:
+
+```bash
+knolo model add local \
+  --provider ollama \
+  --model qwen2.5-coder:7b \
+  --base-url http://127.0.0.1:11434/v1
+knolo agent set-model coding-agent local
+knolo run --agent coding-agent "inspect the workspace and summarize the next steps"
+```
+
+The model proposes work; Knolo Agent remains responsible for policy, approvals,
+tool execution, budgets, observations, and termination.
+
+### Agent run lifecycle
+
+An agent run follows a bounded control-plane lifecycle:
+
+1. A profile gives the agent a role, mission, working style, and success
+   criteria.
+2. The runtime turns the user's request into a plan containing proposed
+   actions.
+3. Policy checks each action against the profile's capabilities, workspace,
+   memory scopes, budgets, and approval state.
+4. The selected host or adapted product component performs the action.
+5. The runtime records the observation, retries only permitted failures, and
+   verifies the result.
+6. The run terminates with a structured report, or pauses so it can be approved,
+   resumed, or stopped safely.
+
+The same lifecycle supports coding, research, and operations profiles. The
+profile and granted capabilities change; the execution and audit boundary does
+not.
 
 ## What this runtime contributes
 
-The harness source provides the implementation material for the Knolo product
-surfaces planned in the migration:
+The implementation source provides the runtime capabilities behind Knolo Agent:
 
 - interactive terminal rendering and session UI;
 - agent lifecycle, conversation state, compaction, and model turns;
@@ -33,22 +131,26 @@ surfaces planned in the migration:
 - tools, MCP/ACP adapters, hooks, plugins, sandboxing, and session persistence;
 - headless operation, diagnostics, crash handling, and test support.
 
-These capabilities must be connected through Knolo’s existing contracts and
-policy boundaries before they are exposed as product defaults. Profiles
-describe mission and role, while packs and host policy grant tools, workspaces,
-credentials, memory, and process authority.
+Knolo Agent exposes these capabilities through explicit contracts and policy
+boundaries. Profiles describe mission and role, while packs and host policy
+grant tools, workspaces, credentials, memory, and process authority.
 
-## Building the harness source
+## Implementation source
 
-The source tree has its own large Cargo closure. Use the pinned toolchain and
-package-specific commands below when working on an extracted component:
+The implementation source has its own Cargo workspace and pinned toolchain. Its
+development packages retain historical crate identifiers required for
+provenance and dependency compatibility:
 
 ```bash
 cargo check -p xai-grok-pager-bin
 cargo test -p xai-grok-config
+cargo build -p xai-grok-pager-bin --release
 ```
 
-The parent workspace’s supported product checks remain:
+The resulting development binary is `xai-grok-pager`; the supported product
+executable is `knolo`. The two names must not be treated as interchangeable.
+
+The parent workspace checks are:
 
 ```bash
 cargo fmt --all --check
@@ -56,20 +158,19 @@ cargo test --workspace
 pnpm --filter @knolo/agents check
 ```
 
-The harness workspace is not silently merged into the parent Cargo workspace.
-The parent Knolo runtime remains authoritative for portable contracts, policy,
-packs, events, checkpoints, replay, and host effect authorization.
+The implementation workspace remains isolated from the parent Cargo workspace.
+Knolo Agent remains authoritative for portable contracts, policy, packs, events,
+checkpoints, replay, and host effect authorization.
 
-## Documentation and naming
+## Product naming and documentation
 
-New user-facing instructions belong in the parent Knolo README and `docs/`.
-Component READMEs in this directory describe implementation details only. They
-must not advertise an upstream product, upstream installer, upstream login, or
-upstream telemetry as the Knolo product experience.
+The customer-facing product name is **Knolo Agent**. The public executable is
+`knolo`. Historical crate, binary, configuration, and dependency names remain
+only where required by implementation provenance and are not product branding.
 
-The public executable is `knolo`. Historical internal names may remain in Rust
-module paths while extraction is staged; any such name must be hidden behind a
-Knolo adapter before publication.
+User-facing installation and CLI behavior are documented in the parent
+[`docs/`](../docs/). This README documents the product boundary and the
+implementation source represented by this directory.
 
 ## Legal and provenance
 

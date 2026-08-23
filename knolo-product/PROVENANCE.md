@@ -1,8 +1,8 @@
-# Knolo product runtime provenance
+# Knolo Agent implementation provenance
 
 This directory was imported into the Knolo workspace from the source revision
-recorded in [`SOURCE_REV`](SOURCE_REV). It is being adapted into the Knolo
-product under the terms that apply to each source component.
+recorded in [`SOURCE_REV`](SOURCE_REV). It is maintained as implementation
+source for Knolo Agent under the terms that apply to each source component.
 
 - First-party source remains covered by the applicable Apache-2.0 license and
   copyright notices.

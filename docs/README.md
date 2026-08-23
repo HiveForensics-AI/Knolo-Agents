@@ -9,5 +9,6 @@
 - [Repository audit](repository-audit.md)
 - [Knolo CLI](cli.md)
 - [Installation and model setup](install.md)
-- [Knolo product runtime source](../knolo-product/README.md) and [provenance](../knolo-product/PROVENANCE.md)
+- [Knolo Agent implementation source](../knolo-product/README.md) and
+  [provenance](../knolo-product/PROVENANCE.md)
 - [vNext Knolo product integration and product migration plan](migration/README.md)

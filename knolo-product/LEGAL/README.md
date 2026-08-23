@@ -3,7 +3,7 @@
 
 # Legal notices
 
-This directory is the Knolo product-runtime index for legal and attribution
+This directory is the Knolo Agent legal and attribution index for
 artifacts. The root [`LICENSE`](../LICENSE),
 [`THIRD-PARTY-NOTICES`](../THIRD-PARTY-NOTICES), package-level notices, and
 vendored license files remain authoritative.

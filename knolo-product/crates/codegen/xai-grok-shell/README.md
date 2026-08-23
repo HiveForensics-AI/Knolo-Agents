@@ -1,11 +1,11 @@
 # Knolo session runtime component
 
-This source component contains the extracted long-running session and agent
-runtime material used during the Knolo product migration. It is not a separate
+This source component contains long-running session and agent runtime material
+used by Knolo Agent. It is not a separate
 user-facing CLI and it must not advertise upstream authentication, telemetry,
 installers, model endpoints, or branding.
 
-## Use the Knolo product
+## Use Knolo Agent
 
 From the parent repository, install and use the public CLI:
 
@@ -30,7 +30,7 @@ inside that adapter.
 
 ## Component role
 
-The code here is being adapted behind Knolo’s existing:
+The code here runs behind Knolo Agent’s existing:
 
 - `knolo-agent-core` contracts and versioned events;
 - pack and policy authority checks;
@@ -54,4 +54,4 @@ cargo test -p xai-grok-shell
 
 The supported product checks run from the parent workspace as documented in the
 parent README. See the root `knolo-product/README.md` and `PROVENANCE.md` for
-the migration boundary and legal requirements.
+the implementation boundary and legal requirements.
