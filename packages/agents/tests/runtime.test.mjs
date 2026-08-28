@@ -36,6 +36,17 @@ test("deterministic replay re-executes the control plane and detects divergence"
   await assert.rejects(() => agent.replayDeterministic({ count: 0 }, first.events.slice(0, -1)), /replay diverged/);
 });
 
+test("state snapshots make deterministic replay verify every revision", async () => {
+  const agent = Agent.load({ definition: definition(), engine: "typescript" });
+  const first = await agent.run({ count: 0 }, { executionId: "snapshot-fixture" });
+  assert.deepEqual(first.state_snapshots?.map(snapshot => [snapshot.revision, snapshot.event_sequence, snapshot.state.value.count]), [[0, 0, 0], [1, 3, 1]]);
+  const replayed = await agent.replayDeterministicWithSnapshots({ count: 0 }, { events: first.events, state_snapshots: first.state_snapshots ?? [] });
+  assert.deepEqual(replayed.state, first.state);
+  const mutated = structuredClone(first.state_snapshots ?? []);
+  mutated[1].state.value.count = 99;
+  await assert.rejects(() => agent.replayDeterministicWithSnapshots({ count: 0 }, { events: first.events, state_snapshots: mutated }), /state snapshot replay diverged at revision 1/);
+});
+
 test("pack capability grants are enforced at definition time", () => {
   const state = stateSchema("packed-state", { count: "Number" });
   const restricted = node("restricted", { capabilities: ["retrieval"], run: () => ({ outcome: { type: "continue" } }) });

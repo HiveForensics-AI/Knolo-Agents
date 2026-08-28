@@ -1,24 +1,25 @@
 # Knolo Agents vNext migration plan
 
 This plan describes how Knolo Agents can absorb the useful capabilities of the
-`knolo-product` agent harness and become a product for coding agents, AI
+`knolo-agent-system` agent harness and become a product for coding agents, AI
 employees, and user-defined agents without abandoning the current package
 boundaries.
 
 The target is not a Grok-branded fork. The target is a Knolo runtime and
 product in which a coding agent is one profile of a general, governed agent.
-Knolo product is treated as an implementation reference and an extraction source;
-its capabilities must be translated into Knolo contracts, policy, events, and
-host adapters before they become part of the product.
+The full system is the product composition layer; its capabilities must still
+be translated into Knolo contracts, policy, events, and host adapters before
+they can execute through the governed runtime.
 
 ## Plan index
 
 The canonical architecture and implementation plan for replacing the imported
-harness with a Knolo v4 autonomous agent is
-[Knolo v4 Autonomous Agent Integration Plan](knolo-v4-grok-integration-plan.md).
+harness with a Knolo agent compatible with published core V5, while retaining
+an explicit V4 migration path, is
+[the Knolo Agent Integration Plan](knolo-agent-integration-plan.md).
 The phase documents below provide the earlier work breakdown and remain useful
-as supporting implementation notes; the v4 plan is authoritative where they
-overlap.
+as supporting implementation notes. The plan's 2026-08-28 revision is
+authoritative where they overlap.
 
 1. [Phase 1 — Baseline, provenance, and product definition](phase-01-baseline-and-provenance.md)
 2. [Phase 2 — Runtime extraction and capability boundaries](phase-02-runtime-extraction.md)
@@ -34,7 +35,13 @@ overlap.
 ## First-pass status (2026-08-20)
 
 The initial implementation pass has started in the authoritative parent
-workspace while keeping knolo-product as an isolated Grok-derived source tree.
+workspace while keeping knolo-agent-system as an isolated Grok-derived product
+workspace with its own provenance and dependency graph.
+
+The V5 alignment pass on 2026-08-28 has since pinned published
+`@knolo/core` V5, added the V5 adapter and conformance fixtures, added
+state-level TypeScript replay, added native effect receipts/retry metadata,
+and connected the product workspace through a governed tool-call adapter.
 
 Completed in this pass:
 
@@ -65,13 +72,13 @@ Completed in this pass:
 
 Still intentionally incomplete after this pass:
 
-- Knolo Core/Cortex/ClaimGraph adapters and authoritative scoped durable memory;
-- full ToolCallV1 policy compilation and host registry execution for every task action;
+- live product tool-bridge routing through the governed adapter for every task action;
 - live checkpoint/event persistence with replay after process restart (the
   current session JSON path is the compatibility baseline);
 - executable parent/child orchestration, budget accounting, and workflow scheduling;
-- TUI and TypeScript event clients over the same session protocol;
-- full Grok capability extraction, sandbox, TUI, MCP/ACP, skills, and plugins;
+- the full coding and research acceptance runs over one shared product control plane;
+- contract integration of the full system's sandbox, TUI, MCP/ACP, skills, and
+  plugins;
 - real local-model coding verification against Ollama;
 - release artifact signing, remote installer publication, and legal review.
 

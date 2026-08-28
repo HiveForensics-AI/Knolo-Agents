@@ -10,3 +10,11 @@ the capability, namespace, call count, and budget used by its named scenario.
 For the complete real-pack path, run `cargo run -p knolo-agent --example pack_e2e`;
 it loads the packaged native fixture, proves an allowed and denied tool call, and
 compares deterministic control-plane replay.
+
+`typescript/research.ts` demonstrates the V5 core adapter path: a host supplies
+retrieval, the workflow preserves evidence and receipt identity, and local
+synthesis runs through the deterministic agent engine. Type-check it with:
+
+```bash
+pnpm --filter @knolo/agents exec tsc -p ../../examples/tsconfig.json --noEmit
+```

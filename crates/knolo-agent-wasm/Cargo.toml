@@ -7,7 +7,7 @@ rust-version.workspace = true
 description = "WASM-safe JSON protocol adapter for Knolo agents."
 
 publish = false
-repository = "https://github.com/knolo-ai/knolo-agents"
+repository = "https://github.com/HiveForensics-AI/Knolo-Agents"
 
 [lib]
 crate-type = ["cdylib", "rlib"]

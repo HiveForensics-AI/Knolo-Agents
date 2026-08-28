@@ -7,7 +7,7 @@
   "author": "Knolo contributors",
   "sideEffects": false,
   "peerDependencies": {
-    "@knolo/core": "^3.5.0"
+    "@knolo/core": "^5.0.0"
   },
   "peerDependenciesMeta": {
     "@knolo/core": {
@@ -41,12 +41,12 @@
   ],
   "repository": {
     "type": "git",
-    "url": "https://github.com/knolo-ai/knolo-agents.git",
+    "url": "https://github.com/HiveForensics-AI/Knolo-Agents.git",
     "directory": "packages/agents"
   },
-  "homepage": "https://github.com/knolo-ai/knolo-agents#readme",
+  "homepage": "https://github.com/HiveForensics-AI/Knolo-Agents#readme",
   "bugs": {
-    "url": "https://github.com/knolo-ai/knolo-agents/issues"
+    "url": "https://github.com/HiveForensics-AI/Knolo-Agents/issues"
   },
   "keywords": [
     "knolo",

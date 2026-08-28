@@ -39,7 +39,8 @@ export type EventKindV1 =
   | { readonly type: "tool_result"; readonly result: ToolResultV1 };
 export interface ExecutionEventV1 { readonly version: 1; readonly sequence: number; readonly execution_id: string; readonly node_id: string | null; readonly timestamp_ms: number; readonly kind: EventKindV1 }
 export type ExecutionStatus<R = JsonValue> = { readonly type: "suspended"; readonly reason: string } | { readonly type: "terminated"; readonly result: R } | { readonly type: "failed"; readonly error: string } | { readonly type: "cancelled" };
-export interface ExecutionReport<S, R = JsonValue> { readonly status: ExecutionStatus<R>; readonly state: StateSnapshot<S>; readonly events: readonly ExecutionEventV1[]; readonly steps: number; readonly tokens: number; readonly cost_micros: number }
+export interface StateSnapshotRecordV1<S = JsonValue> { readonly version: 1; readonly revision: number; readonly event_sequence: number; readonly state: StateSnapshot<S> }
+export interface ExecutionReport<S, R = JsonValue> { readonly status: ExecutionStatus<R>; readonly state: StateSnapshot<S>; readonly events: readonly ExecutionEventV1[]; readonly state_snapshots?: readonly StateSnapshotRecordV1<S>[]; readonly steps: number; readonly tokens: number; readonly cost_micros: number }
 export interface Suspension<I = JsonValue> { readonly version: 1; readonly execution_id: string; readonly reason: string; readonly checkpoint: CheckpointV1; readonly input?: I }
 export interface CheckpointV1 { readonly version: 1; readonly execution_id: string; readonly graph_hash: string; readonly pack_hash: string; readonly policy_hash: string; readonly node_implementation_hash: string; readonly contract_hash: string; readonly state: StateSnapshot; readonly pending_node: string; readonly event_cursor: number; readonly steps: number; readonly tokens: number; readonly cost_micros: number }
 export type Failure = { readonly type: "definition"; readonly message: string } | { readonly type: "unsupported"; readonly engine: EngineName; readonly capability: string } | { readonly type: "execution"; readonly message: string } | { readonly type: "cancelled"; readonly message: string };
@@ -52,7 +53,10 @@ export type EngineCommand<S = JsonValue, I = JsonValue> = { readonly type: "run"
 export type EngineResponse<S = JsonValue> = { readonly type: "event"; readonly event: ExecutionEventV1 } | { readonly type: "report"; readonly report: ExecutionReport<S> } | { readonly type: "inspection"; readonly inspection: AgentInspection } | { readonly type: "error"; readonly failure: Failure };
 export interface AgentInspection { readonly engine: EngineName; readonly graph: GraphDefinitionV1; readonly capabilities: readonly string[]; readonly limitations: readonly string[] }
 export interface ToolCallV1 { readonly version: 1; readonly call_id: string; readonly tool_id: string; readonly arguments: JsonValue }
-export interface ToolResultV1 { readonly version: 1; readonly call_id: string; readonly tool_id: string; readonly value: JsonValue; readonly usage: ResourceUsageV1 }
+export type RetryClassV1 = "safe" | "idempotent" | "non_idempotent";
+export type EffectStatusV1 = "executed" | "denied" | "failed";
+export interface EffectReceiptV1 { readonly version: 1; readonly call_id: string; readonly tool_id: string; readonly host: string; readonly idempotency_key: string; readonly status: EffectStatusV1; readonly redacted_output: JsonValue; readonly resource_delta: ResourceUsageV1; readonly retry_class: RetryClassV1 }
+export interface ToolResultV1 { readonly version: 1; readonly call_id: string; readonly tool_id: string; readonly value: JsonValue; readonly usage: ResourceUsageV1; readonly receipt: EffectReceiptV1 }
 export interface ResourceUsageV1 { readonly calls: number; readonly units: number; readonly duration_ms: number }
 export interface RetrievalEvidenceV1 { readonly content: JsonValue; readonly score_micros: number; readonly provenance: { readonly source_id: string; readonly locator: string; readonly content_hash: string } }
 export interface RetrievalResultV1 { readonly version: 1; readonly evidence: readonly RetrievalEvidenceV1[] }

@@ -1,0 +1,19 @@
+{
+  "version": 1,
+  "kind": "knolo-core-compatibility",
+  "agent_package": "@knolo/agents",
+  "core_peer_range": "^5.0.0",
+  "published_core_version": "5.0.0",
+  "stable_capabilities": [
+    "portable-pack-mount",
+    "deterministic-lexical-retrieval",
+    "live-pack-overlay",
+    "cortex",
+    "claim-graph"
+  ],
+  "v5_status": "published-and-current",
+  "v5_policy": "primary-compatibility-line",
+  "v4_status": "legacy-compatibility-and-migration-path",
+  "authority": "knolo-core-owns-knowledge-and-evidence-artifacts",
+  "agent_boundary": "knolo-agents-owns-orchestration-policy-and-host-effects"
+}

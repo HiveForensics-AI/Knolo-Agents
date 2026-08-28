@@ -10,3 +10,6 @@ export * from "./hitl/index.js";
 export * from "./replay/index.js";
 export * from "./icp/index.js";
 export * from "./profile/index.js";
+export * from "./core/index.js";
+export * from "./research/index.js";
+export * from "./coding/index.js";

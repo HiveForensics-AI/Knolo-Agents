@@ -80,7 +80,7 @@ Larger Wasm increases install/upgrade cost; keep optional features gated.
 
 ## Related docs
 
-- [ADR-001](adr-001-icp-agent-runtime.md)
+- [ADR-001](adr-001-icp-deployment-adapter.md)
 - [Constraints matrix](icp-constraints-matrix.md)
 - [Security checklist](icp-security-checklist.md)
 - Example: [`examples/icp-agent-canister/`](../../examples/icp-agent-canister/)

@@ -1,12 +1,32 @@
-# Knolo v4 Autonomous Agent Integration Plan
+# Knolo Agent Integration Plan — V5 Compatibility / V4 Migration
+
+> **Plan revision — 2026-08-28.** The public `knolo-core` repository has moved
+> beyond the V4-only assumptions used when this document was drafted. The public
+> package is now V5, while V4 remains a compatibility and migration path. The
+> revised execution order below supersedes the original V4-first sequencing;
+> the detailed eight-phase extraction backlog is retained as historical work
+> inventory, not as permission to duplicate upstream runtime ownership.
 
 ## 1. Decision and target outcome
 
 Knolo will absorb the imported Grok Build harness as an implementation source,
 not expose it as a second product. The final product will be a Knolo agent
-runtime with the harness's interactive, autonomous, workspace, session, tool,
-and extensibility capabilities, governed by Knolo v4 contracts and powered by
-Knolo knowledge and memory primitives.
+runtime with the harness's useful interactive, autonomous, workspace, session,
+tool, and extensibility capabilities. It will be governed by the agent
+contracts in this repository and powered by the canonical knowledge/evidence
+primitives in `knolo-core`.
+
+The completion boundary is now explicit:
+
+- `knolo-core` owns Knowledge Images, pack bytes, roots/digests, deterministic
+  query planning and receipts, evidence identity, Cortex/ClaimGraph data, and
+  the published V5 runtime primitives.
+- Knolo Agents owns graph orchestration, profile-to-authority binding, host
+  effect adapters, approval workflows, model/provider seams, and product
+  surfaces.
+- The two repositories integrate through narrow versioned adapters and
+  conformance fixtures. Agent code must not recreate or vendor core storage,
+  verification, or knowledge-image formats.
 
 The public experience is:
 
@@ -29,28 +49,30 @@ through `knolo`, its model/provider system is Knolo-owned, its authority flows
 through Knolo policy, and no user-facing surface instructs users to run `grok`
 or configure an upstream product.
 
-## 2. Knolo v4 alignment
+## 2. Knolo V5 alignment and V4 migration
 
-Knolo v4 is the knowledge and deterministic-runtime foundation. The agent must
-use it as an active control-plane dependency rather than as an optional RAG
-add-on.
+V5 is now the published compatibility line for consumers. V4 remains readable
+through explicit migration and compatibility adapters. The agent must use
+`knolo-core` as an active knowledge/evidence dependency and bind new work to the
+published V5 APIs and fixtures, without creating a parallel artifact store.
 
-| Knolo v4 capability | Agent responsibility |
+| `knolo-core` capability | Agent responsibility |
 | --- | --- |
-| `@knolo/core` and portable `.knolo` packs | Store versioned agent instructions, role knowledge, tool descriptions, policies, procedures, and domain documents. |
-| Deterministic lexical retrieval | Ground planning and tool selection with reproducible first-pass retrieval, including offline operation. |
-| Optional hybrid reranking | Improve retrieval over lexical candidates when a host provides embeddings; never replace lexical grounding. |
-| `LivePack` | Maintain mutable task/project knowledge overlays without mutating the base pack. |
-| Cortex | Store append-only agent memories, preferences, lessons, and run-derived facts with scopes, labels, provenance, and retention. |
-| ClaimGraph | Represent claims, entities, relationships, evidence, and proposed knowledge changes; require review before durable promotion where configured. |
+| V5 Knowledge Images and V4 migration | Consume mounted artifacts through an adapter; preserve stable source/evidence identity and fingerprints. Agent authority packs remain separate from knowledge artifacts. |
+| Deterministic lexical retrieval, query plans, and receipts | Ground planning and tool selection with reproducible evidence; persist the plan/receipt reference in agent context and events. |
+| Optional hybrid reranking | Use only as an explicit host capability over bounded lexical candidates; never replace lexical grounding or evidence identity. |
+| `LivePack` / V5 mutable or event overlays | Use core-owned overlay APIs for task/project knowledge; do not create a second agent-owned document store. |
+| Cortex | Request scoped memory through a narrow adapter; preserve core-owned memory IDs, namespaces, provenance, retention, and replay data. |
+| ClaimGraph | Treat claims as core-owned evidence structures; agent workflows may propose/review/commit, but do not implement a parallel claim database. |
 | `RouteDecisionV1` | Validate routing from a task to an agent/profile or specialist. Routing is a decision, not authority. |
 | `ToolCallV1` | Normalize every model-requested action before policy validation and host execution. |
-| Namespace binding | Prevent an agent from retrieving or writing knowledge outside its declared domain. |
-| Rust, TypeScript, Python, and ICP runtimes | Keep portable artifacts interoperable while restricting effects to the host that owns them. |
+| Namespace and policy binding | Combine core knowledge scope with agent pack authority; a successful retrieval must not imply permission to act. |
+| Core Rust/TypeScript/CLI/ICP surfaces | Prefer published core APIs and conformance vectors; keep agent host effects restricted to the runtime that owns them. |
 
 The agent runtime must never copy `@knolo/core` into this repository. The
-existing core boundary remains authoritative. Rust owns execution, TypeScript
-owns ergonomic composition, and Knolo Core owns knowledge/memory artifacts.
+existing core boundary remains authoritative. Rust owns agent execution,
+TypeScript owns ergonomic composition, and Knolo Core owns knowledge/memory
+artifacts, verification, and its published runtime primitives.
 
 ## 3. Target architecture
 
@@ -62,8 +84,8 @@ owns ergonomic composition, and Knolo Core owns knowledge/memory artifacts.
                          Agent Control Plane
        profile + graph + pack bindings + policy + budgets + approvals
                                   |
-                 Knolo v4 Context and Decision Layer
-       mount .knolo -> retrieve -> Cortex recall -> ClaimGraph context
+              Knolo Core Knowledge/Evidence Layer
+              V5 mount -> evidence/receipts/context
                     -> validate route/tool decisions
                                   |
                       Autonomous Session Runtime
@@ -132,8 +154,8 @@ No current package is removed, renamed, vendored, or silently replaced.
 | `knolo-agent-wasm` | Portable inspection, routing, validation, and host-driven execution protocol; never hidden filesystem/process/provider access. |
 | `knolo-agent-icp` | Bounded ICP control-plane/storage adapter for packs, run metadata, claims, and supported event workflows; no unrestricted OS effects. |
 | `@knolo/agents` | Typed profile/pack/model/run builders, host interfaces, event clients, template loading, and application embedding. |
-| `@knolo/core` | External Knolo v4 dependency for `.knolo` packs, deterministic retrieval, LivePack, Cortex, ClaimGraph, and related core APIs. It is not copied into this repo. |
-| `knolo-product/` | Temporary extraction workspace and provenance source until all selected capabilities are ported behind Knolo adapters. It is not a public package or second CLI. |
+| `@knolo/core` | External Knolo dependency for published V5 Knowledge Images, verification, receipts, Cortex, ClaimGraph, and V4 migration APIs. It is not copied into this repo. |
+| `knolo-agent-system/` | Full Knolo Agent product workspace containing the adapted Grok-derived system. It owns product composition, not the portable authority model; it remains an independent workspace with explicit adapter integration. |
 
 The historical harness Cargo workspace may remain isolated during extraction to
 keep builds manageable. Its crates are not public API. Once a capability has a
@@ -160,7 +182,13 @@ graph wholesale.
 | Sessions/checkpoints | Knolo events, persistence, replay | Runs pause, resume after restart, and fail closed on incompatible artifacts. |
 | Diagnostics/crash handling | Knolo run status and audit APIs | Failures are typed, actionable, resumable where safe, and never silently retried when effects may duplicate. |
 
-## 6. Eight-phase implementation plan
+## 6. Historical eight-phase extraction backlog
+
+The eight phases below remain useful for tracking selected harness capabilities,
+but they are no longer the implementation order. They were written against a
+V4-only core boundary and should not be used to justify duplicating V5
+Knowledge Image, verification, durable-run, or receipt functionality. The
+revised order is in section 11.
 
 ### Phase 1 — Baseline, provenance, and v4 contract lock
 
@@ -480,12 +508,15 @@ test, Ollama smoke test, and supported-host security review.
 
 ### Compatibility line
 
-- **0.2:** contracts, profile binding, provider registry, and current bounded
-  runtime remain compatible; imported harness stays development-only.
-- **0.3:** Knolo session/TUI, workspace tools, durable runs, memory, skills,
-  and delegation become preview features behind explicit gates.
-- **1.0:** the Knolo agent contract, installer, public CLI/TUI, replay format,
-  provider registry, and security posture are frozen.
+- **0.2:** preserve the current agent contracts and ship a V5-compatible core
+  adapter for deterministic retrieval/evidence; the imported harness stays
+  development-only.
+- **0.3:** add V5 evidence/query-plan bridge coverage, durable agent records,
+  and one product workflow. V4 migration remains an explicit compatibility
+  feature, not the primary dependency.
+- **1.0:** freeze the agent control-plane contracts only after the core
+  compatibility matrix, replay/receipt semantics, upgrade path, and security
+  posture are demonstrated.
 
 ### Feature gates
 
@@ -516,21 +547,118 @@ The project is complete only when all of these are true:
 
 The first implementation sprint after approving this plan should be:
 
-1. Add `@knolo/core` v4 as an explicit peer/host integration boundary and
-   document the exact version/API matrix.
-2. Create the v4 context, memory, pack, route, and tool conformance fixtures in
-   `contracts/` and `examples/`.
-3. Refactor the current `knolo run` loop so all model output becomes validated
-   `ToolCallV1`/route decisions and all retrieval is represented as typed
-   context.
-4. Add a native `KnoloModelProvider` registry with Ollama as the reference
-   adapter and embedding-model rejection.
-5. Define the adapter seam for the imported session/TUI runtime and port one
-   vertical slice: interactive coding task -> approved edit -> test -> report.
-6. Add the first cross-profile acceptance pair: coding with workspace tools and
-   research with `.knolo` retrieval/Cortex but no shell.
-7. Do not publish or advertise the imported TUI as Knolo until that vertical
-   slice passes the same CLI, headless, and replay tests.
+1. Pin the supported published V5 `@knolo/core` line and record the V4
+   migration surface and conformance-fixture policy.
+2. Add a narrow core adapter for mounted Knowledge Images, deterministic
+   retrieval, evidence identity, query plans/receipts, LivePack, Cortex, and
+   ClaimGraph. Keep these interfaces out of `knolo-agent-core`'s portable
+   contract crate.
+3. Add cross-runtime fixtures that prove V5 evidence/receipt fields are
+   preserved and that V4 migration remains explicit. Unknown or unavailable
+   capabilities must fail explicitly.
+4. Refactor `knolo run` so planning context is typed evidence and every model
+   action becomes a validated `ToolCallV1` or route decision before host policy.
+5. Finish one local vertical slice: research retrieval with citations and a
+   coding task with an approved edit, test execution, checkpoint, replay, and
+   structured report.
+6. Make the native runtime's event/checkpoint model authoritative for agent
+   orchestration, while recording core artifact/receipt fingerprints instead of
+   reimplementing core durability or verification.
+7. Only after that slice passes, resume ICP, standalone WASM, TUI, and imported
+   product extraction as separately gated host adapters. Do not publish or
+   advertise any of them as complete before their conformance paths are green.
 
-This order makes the harness useful quickly while ensuring that every later
-capability lands inside Knolo v4's deterministic knowledge and governance model.
+This order makes the framework useful quickly while ensuring that later
+capabilities land inside the stable agent boundary and the published core V5
+knowledge/verifiability model.
+
+## 11. Revised completion plan after the core V5 change
+
+### Track A — Core compatibility bridge
+
+Deliver the smallest useful integration with the public core line:
+
+- a host-owned `CoreKnowledgeProvider`/equivalent adapter, with V5 as the
+  primary capability set and explicit V4 migration reporting;
+- mounted artifact identity, namespace scope, deterministic retrieval results,
+  evidence spans, query-plan/receipt references, and source fingerprints;
+- optional LivePack, Cortex, and ClaimGraph adapters with explicit absence and
+  denial behavior;
+- versioned fixtures and a compatibility table that separates published V5 APIs
+  from the legacy V4 migration surface;
+- no dependency from the portable Rust contract crate on a TypeScript package,
+  core implementation, or core-owned binary format.
+
+### Track B — Agent control-plane completion
+
+Finish the framework capabilities that remain agent-owned:
+
+- make the native scheduler the single authority for graph transitions,
+  approvals, tool policy, budgets, effects, checkpoints, and run events;
+- complete state-level deterministic replay, including state snapshots and
+  core receipt/evidence references where present;
+- ensure every task action is policy-compiled and executed through the same
+  `ToolCallV1` path, including the current product CLI path;
+- define idempotency and effect-receipt rules for retries, resume, and
+  non-deterministic host effects;
+- add coding and research acceptance fixtures using the same control plane but
+  different authority packs and knowledge scopes.
+
+#### Delivered in the current implementation pass
+
+- TypeScript reports now retain the initial state and every patched revision;
+  snapshot-aware replay compares the complete state trace while the original
+  event-only replay API remains compatible.
+- Native tool definitions now declare retry class, and every native tool
+  attempt emits a redacted `EffectReceiptV1` for executed, denied, or failed
+  outcomes. The call ID is the explicit idempotency key.
+- The full product workspace is wired to the governed boundary through
+  `knolo-agent-system/crates/integration/knolo-governed-adapter`; product
+  requests are validated `ToolCallV1` candidates before the native host policy
+  path.
+
+The product adapter is deliberately a normalization seam, not a second policy
+engine. The live product bridge now crosses that seam; the remaining work is
+to prove coding and research runs end to end with shared events, approvals,
+checkpoints, replay, and reports.
+
+The framework-level coding slice is now available as `runLocalCoding`: it
+covers inspection, explicit edit approval, receipt propagation, test
+verification, and pre-effect suspension for denied edits. The full product
+workspace uses the same governed bridge, but its broader tool catalog and
+interactive surfaces remain host-specific.
+
+### Track C — Product thin slice
+
+Port only the harness capabilities needed to prove the product contract:
+
+- local model/provider configuration without credentials in artifacts;
+- read-only workspace inspection, approved edits, test execution, pause,
+  resume, stop, replay, and headless reporting;
+- retrieval-grounded research with citations and a denied shell capability;
+- one CLI/headless/TypeScript event and report shape shared across surfaces.
+
+The `knolo-agent-system/` tree is the full product workspace, not a temporary
+placeholder or second product. Its independent Cargo workspace and provenance
+boundary are intentional. It becomes publishable through a Knolo integration
+facade only after product actions route through the governed agent contracts.
+Do not make it a root Cargo workspace member or treat its generated `target/`
+output as part of the framework release.
+
+### Track D — Deferred host adapters
+
+Resume ICP, standalone WASM, TUI, ACP/MCP, browser/computer use, and broader
+multi-agent orchestration only after Tracks A–C are green. Each adapter must
+consume the same graph/policy/event contracts and declare which V5 core
+capabilities it supports, plus any explicit V4 migration support. ICP remains a host/deployment option, not the
+architecture that defines the framework.
+
+### Revised completion gate
+
+The pending version is complete when a clean host can run both a coding and a
+research agent through the shared control plane; retrieval is backed by the
+published V5 core path; core evidence/receipt identity is preserved; tool
+authority, approvals, budgets, checkpoint/resume, and replay are tested; and
+the CLI, TypeScript surface, and native runtime report the same run semantics.
+V4 migration may remain explicitly gated, but no core-owned artifact or
+verification behavior may be silently re-created inside Knolo Agents.

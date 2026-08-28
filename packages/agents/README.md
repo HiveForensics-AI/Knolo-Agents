@@ -9,9 +9,12 @@ execution adapters for Knolo Agents.
 pnpm add @knolo/agents
 ```
 
-`@knolo/core` is an optional peer integration for applications that inject
-Cortex or ClaimGraph capabilities; this package does not bundle or implement
-that storage layer.
+`@knolo/core` `^5.0.0` is an optional peer integration for applications that
+inject Cortex or ClaimGraph capabilities; this package does not bundle or
+implement that storage layer. V4 compatibility is legacy and adapter-gated.
+The V5 bridge contract is exported from `@knolo/agents` and keeps Knowledge
+Image identity, evidence identity, and query receipts attached to retrieval
+responses. See the deterministic fixtures under `contracts/fixtures/core/`.
 
 ## Usage
 
@@ -52,6 +55,16 @@ built from your dfx declarations for live calls. See
 [`examples/icp-agent-canister/`](../../examples/icp-agent-canister/) and
 [architecture documentation](../../docs/architecture/README.md).
 
+TypeScript execution reports include versioned state snapshots for deterministic
+state-level replay. Host tool integrations should preserve the shared V1 effect
+receipt shape and keep raw credentials and unredacted host output outside
+portable reports.
+
+The package also includes deterministic `runLocalResearch` and `runLocalCoding`
+vertical slices for acceptance testing. Both use the same graph control plane;
+research injects V5 core evidence, while coding injects an explicitly approved
+workspace host.
+
 ## Development
 
 ```bash
@@ -62,5 +75,5 @@ pnpm --filter @knolo/agents test
 
 ## Status and license
 
-This is the `0.1.0` early release of the TypeScript surface; APIs may evolve
+This is the `0.1.3` early release of the TypeScript surface; APIs may evolve
 before 1.0. The package is licensed under Apache License 2.0. See [LICENSE](LICENSE).

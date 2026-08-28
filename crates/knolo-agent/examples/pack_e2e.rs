@@ -13,7 +13,7 @@ use knolo_agent::{
     policy::BudgetLedger,
     replay::{ArtifactHashesV1, ReplayModeV1, ReplayRequestV1},
     runtime::{RuntimePolicyV1, Scheduler},
-    tool::{ToolCallV1, ToolImplementation},
+    tool::{RetryClassV1, ToolCallV1, ToolImplementation},
     CoreError,
 };
 use serde_json::{json, Value};
@@ -148,6 +148,7 @@ fn main() -> Result<(), CoreError> {
             capability: id("cortex"),
             argument_contract: json!({"type":"object","required":["q"]}),
             result_contract: json!({"type":"object","required":["answer"]}),
+            retry_class: RetryClassV1::Idempotent,
         },
     })?;
     registry.register(EchoTool {
@@ -158,6 +159,7 @@ fn main() -> Result<(), CoreError> {
             capability: id("export"),
             argument_contract: json!({"type":"object"}),
             result_contract: json!({"type":"object","required":["answer"]}),
+            retry_class: RetryClassV1::NonIdempotent,
         },
     })?;
     let mut ledger = BudgetLedger::default();

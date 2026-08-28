@@ -15,6 +15,7 @@ fn definition() -> tool::ToolDefinition {
         capability: id("cortex"),
         argument_contract: json!({"type":"object","required":["q"],"properties":{"q":{"type":"string"}}}),
         result_contract: json!({"type":"object","required":["answer"]}),
+        retry_class: tool::RetryClassV1::Idempotent,
     }
 }
 struct Search {
@@ -112,6 +113,8 @@ fn budget_is_reserved_before_execution() {
         arguments: json!({"q":"allowed"}),
     };
     assert!(r.execute(&p, &mut ledger, call(), &mut audit).is_ok());
+    assert_eq!(audit[0].receipt.idempotency_key, "x");
+    assert_eq!(audit[0].receipt.retry_class, tool::RetryClassV1::Idempotent);
     assert!(matches!(
         r.execute(&p, &mut ledger, call(), &mut audit),
         Err(CoreError::PolicyDenied(policy::PolicyDenialV1 {
@@ -119,6 +122,7 @@ fn budget_is_reserved_before_execution() {
             ..
         }))
     ));
+    assert_eq!(audit[1].receipt.status, tool::EffectStatusV1::Denied);
 }
 #[test]
 fn packs_and_audits_cannot_serialize_host_secrets() {

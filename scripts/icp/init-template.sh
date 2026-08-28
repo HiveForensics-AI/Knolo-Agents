@@ -44,7 +44,7 @@ cat > "$TARGET/README.md" <<'EOF'
 5. Load `fixtures/portable-counter.definition.json` via `load_definition`.
 
 See knolo-agents docs:
-- `docs/architecture/adr-001-icp-agent-runtime.md`
+- `docs/architecture/adr-001-icp-deployment-adapter.md`
 - `docs/architecture/icp-cost-guide.md`
 - `docs/architecture/icp-security-checklist.md`
 - TypeScript client: `@knolo/agents` → `IcpAgentRuntimeClient`

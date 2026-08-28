@@ -23,6 +23,7 @@ use crate::types::output::{ToolOutput, ToolRunResult};
 use crate::types::resources::{OwnerSessionId, State, Terminal};
 use crate::types::template_renderer::TemplateRenderer;
 use crate::types::tool::ToolKind;
+use knolo_governed_adapter::{ProductToolRequestV1, normalize};
 
 /// Result of executing a tool through the bridge.
 ///
@@ -202,8 +203,24 @@ impl ToolBridge {
         client_params: serde_json::Value,
         tool_call_id: &str,
     ) -> Result<ToolRunResult, xai_tool_runtime::ToolError> {
+        let governed = normalize(ProductToolRequestV1 {
+            call_id: tool_call_id.to_owned(),
+            tool_id: client_function_name.to_owned(),
+            arguments: client_params,
+            approval_token: None,
+        })
+        .map_err(|error| {
+            xai_tool_runtime::ToolError::invalid_arguments(format!(
+                "governed tool request rejected: {error}"
+            ))
+        })?;
         self.registry
-            .call(client_function_name, client_params, tool_call_id, None)
+            .call(
+                &governed.product_tool_id,
+                governed.call.arguments,
+                &governed.call.call_id,
+                None,
+            )
             .await
     }
 

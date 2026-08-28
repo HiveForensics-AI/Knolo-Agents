@@ -1,1 +1,1 @@
-{"version":1,"call_id":"call-001","tool_id":"knowledge.search","value":{"hits":1},"usage":{"calls":1,"units":3,"duration_ms":8}}
+{"version":1,"call_id":"call-001","tool_id":"knowledge.search","value":{"hits":1},"usage":{"calls":1,"units":3,"duration_ms":8},"receipt":{"version":1,"call_id":"call-001","tool_id":"knowledge.search","host":"knolo-agent-host","idempotency_key":"call-001","status":"executed","redacted_output":null,"resource_delta":{"calls":1,"units":3,"duration_ms":8},"retry_class":"idempotent"}}

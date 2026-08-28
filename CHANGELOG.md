@@ -10,16 +10,37 @@ called out explicitly and may evolve without a crates.io release.
 
 ## [Unreleased]
 
+### Changed
+
+- Renamed the full Grok-derived product workspace from `knolo-product/` to
+  `knolo-agent-system/` while preserving its provenance and independent Cargo
+  workspace.
+- Clarified that `knolo-agent-system/` is the product composition layer and
+  `knolo-agent-icp`/`knolo-agent-wasm` are optional deployment adapters.
+- Updated the integration plan for published `@knolo/core` V5 with V4
+  migration compatibility: core remains authoritative for Knowledge Images,
+  evidence identity, verification, retrieval plans/receipts, Cortex, and
+  ClaimGraph; agent runtime orchestration remains here.
+- Renamed ADR-001 to make the ICP deployment-adapter decision explicit.
+
 ### Added
 
-#### ICP agent runtime (Phases 0–4)
+- State-level deterministic replay for the TypeScript engine, including
+  versioned state snapshots and snapshot-aware replay verification.
+- Versioned `EffectReceiptV1` records with explicit tool retry classes,
+  idempotency keys, redacted output fields, and native host audit coverage.
+- `knolo-governed-adapter` in the independent `knolo-agent-system` workspace,
+  plus the `xai-grok-agent` binding that normalizes product tool requests into
+  validated Knolo `ToolCallV1` candidates.
+
+#### ICP deployment adapter (Phases 0–4)
 
 - New workspace crate **`knolo-agent-icp`** (`publish = false`): Internet Computer
   canister host for the Knolo control plane (`ic-cdk` 0.17, Candid, `ic-llm` 1.1,
   `ic-cdk-timers` 0.11, `ic-stable-structures` 0.6).
 - **Phase 0 — discovery**
   - Architecture decision record:
-    [`docs/architecture/adr-001-icp-agent-runtime.md`](docs/architecture/adr-001-icp-agent-runtime.md)
+    [`docs/architecture/adr-001-icp-deployment-adapter.md`](docs/architecture/adr-001-icp-deployment-adapter.md)
   - Constraints matrix (Wasm size, portability, knolo-core ICP reuse):
     [`docs/architecture/icp-constraints-matrix.md`](docs/architecture/icp-constraints-matrix.md)
   - Confirmed `knolo-agent-core` and `knolo-agent` build for
@@ -63,12 +84,13 @@ called out explicitly and may evolve without a crates.io release.
     [`docs/architecture/icp-cost-guide.md`](docs/architecture/icp-cost-guide.md).
   - Handoff fixtures + `scripts/run-handoff.sh` in the dfx example.
 - Documentation cross-links in README, architecture index, WASM notes, and
-  `FUTURE.md` platform target status.
+  `FUTURE.md` optional-adapter status.
 - Root `.gitignore` entries for `.plans/` (local planning notes) and `.dfx/`.
 
 ### Notes
 
-- `knolo-agent-icp` is workspace-validated only; not published separately.
+- `knolo-agent-icp` is an optional deployment adapter, workspace-validated only;
+  it is not published separately and is not required by the product path.
 - Browser `knolo-agent-wasm` remains a separate path from the ICP canister host.
 - Live LLM runs require a reachable LLM canister; pure deterministic graphs run
   without it.

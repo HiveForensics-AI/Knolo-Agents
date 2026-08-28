@@ -6,6 +6,7 @@ version = "0.1.220-alpha.4"
 description = "Grok tools library"
 
 [dependencies]
+knolo-governed-adapter = { path = "../../integration/knolo-governed-adapter" }
 anyhow = { workspace = true }
 arc-swap = { workspace = true }
 dirs = { workspace = true }

@@ -167,7 +167,8 @@ examples, evaluation harnesses, and pre-1.0 API freeze work.
   demo, consumers must invent integration themselves.
 - **Rough acceptance criteria:**
   - Optional demo or docs path that depends on a published `@knolo/core`
-    version range (currently documented as `^3.5.0` for TypeScript).
+    version range (V5 is the currently supported published line; V4 remains a
+    legacy migration and compatibility path).
   - No vendoring of core source, credentials, or storage into this repository.
   - Demo fails closed when core is absent (explicit error, not partial silent
     stubs).
@@ -227,11 +228,12 @@ examples, evaluation harnesses, and pre-1.0 API freeze work.
 - Conformance suite expansion as portable contracts grow (without bloating the
   TypeScript engine into a second full runtime).
 
-#### ICP agent runtime canister (platform target)
+#### ICP agent runtime canister (optional deployment adapter)
 
-- **What:** Host `knolo-agent-core` + scheduler inside an ICP canister so the
-  canister is the Host: packs, checkpoints, events, tools, ic-llm / outcalls,
-  and optional calls to knolo-core knowledge canisters.
+- **What:** Host `knolo-agent-core` + scheduler inside an ICP canister as an
+  optional deployment adapter. It can host packs, checkpoints, events, tools,
+  ic-llm / outcalls, and optional calls to knolo-core knowledge canisters, but
+  it does not define the product or block the local/server path.
 - **Status (Phase 0–4 landed):** Workspace crate `knolo-agent-icp`, ADR-001,
   constraints matrix, deterministic Candid control plane, pack-gated tools,
   ic-llm suspend/resume, knowledge retrieval principal, timers for
@@ -245,7 +247,7 @@ examples, evaluation harnesses, and pre-1.0 API freeze work.
 - **Optional later:** AgentForge-style registry, factory-per-agent topology,
   HTTPS outcall production transforms, mainnet ops runbooks beyond the
   checklist.
-- **Docs:** `docs/architecture/adr-001-icp-agent-runtime.md`,
+- **Docs:** `docs/architecture/adr-001-icp-deployment-adapter.md`,
   `docs/architecture/icp-constraints-matrix.md`,
   `docs/architecture/icp-cost-guide.md`,
   `docs/architecture/icp-security-checklist.md`. Local planning notes in

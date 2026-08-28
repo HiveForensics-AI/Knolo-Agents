@@ -7,7 +7,9 @@ use knolo_agent::policy::BudgetLedger;
 use knolo_agent::replay::{ArtifactHashesV1, ReplayModeV1, ReplayRequestV1};
 use knolo_agent::runtime::{FixedClock, RuntimePolicyV1, Scheduler, VecEventSink};
 use knolo_agent::state::{StatePatch, StateSchemaV1, StateSnapshot};
-use knolo_agent::tool::{ResourceUsageV1, ToolCallV1, ToolDefinition, ToolImplementation};
+use knolo_agent::tool::{
+    ResourceUsageV1, RetryClassV1, ToolCallV1, ToolDefinition, ToolImplementation,
+};
 use knolo_agent::{
     CompiledGraphV1, CoreError, ExecutionId, ExecutionLimitsV1, GraphDefinitionV1,
     NodeDefinitionV1, TransitionDefinitionV1,
@@ -145,6 +147,7 @@ fn loads_pack_and_enforces_capabilities_with_deterministic_control_plane() {
                 capability: id("cortex"),
                 argument_contract: json!({"type": "object", "required": ["q"]}),
                 result_contract: json!({"type": "object", "required": ["answer"]}),
+                retry_class: RetryClassV1::Idempotent,
             },
         })
         .unwrap();
@@ -157,6 +160,7 @@ fn loads_pack_and_enforces_capabilities_with_deterministic_control_plane() {
                 capability: id("export"),
                 argument_contract: json!({"type": "object"}),
                 result_contract: json!({"type": "object", "required": ["answer"]}),
+                retry_class: RetryClassV1::NonIdempotent,
             },
         })
         .unwrap();

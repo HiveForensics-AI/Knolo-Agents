@@ -2,6 +2,7 @@
 
 use std::sync::Arc;
 
+use knolo_governed_adapter::{AdapterError, GovernedToolCallV1, ProductToolRequestV1, normalize};
 use xai_grok_sampling_types::HostedTool;
 use xai_grok_tools::bridge::ToolBridge;
 use xai_grok_tools::types::definition::ToolDefinition;
@@ -92,6 +93,15 @@ impl Agent {
     /// The full agent definition.
     pub fn definition(&self) -> &AgentDefinition {
         &self.definition
+    }
+
+    /// Normalize a product-originated tool request before the native host
+    /// applies its compiled pack policy and executes the effect.
+    pub fn governed_tool_request(
+        &self,
+        request: ProductToolRequestV1,
+    ) -> Result<GovernedToolCallV1, AdapterError> {
+        normalize(request)
     }
 
     /// Permission mode for this agent.

@@ -5,6 +5,7 @@ import { TypeScriptEngine } from "../engine/typescript/index.js";
 import type { Engine, RunOptions } from "../engine/typescript/index.js";
 import { WasmEngine } from "../engine/wasm/index.js";
 import type { WasmProtocolAdapter } from "../engine/wasm/index.js";
+import { assertStateSnapshots, type ReplayTraceV1 } from "../replay/index.js";
 
 export interface AgentLoadOptions<S> { readonly definition: AgentDefinition<S> | CompiledAgentDefinition<S>; readonly engine: EngineName; readonly wasm?: WasmProtocolAdapter }
 export interface ResumeOptions extends Omit<RunOptions, "resumeInput"> {}
@@ -28,6 +29,12 @@ export class Agent<S, ResumeInput = JsonValue, Result = JsonValue> {
     const report = await this.run(initial, { executionId: expected[0]?.execution_id });
     const expectedResult = expected.find(event => event.kind.type === "terminated");
     if (JSON.stringify(controlTrace(report.events)) !== JSON.stringify(controlTrace(expected)) || report.status.type !== (expectedResult ? "terminated" : report.status.type)) throw new DefinitionError("deterministic replay diverged from recorded control-plane events");
+    return report;
+  }
+  /** Re-execute a portable graph and compare both its control-plane trace and state revisions. */
+  async replayDeterministicWithSnapshots(initial: S, expected: ReplayTraceV1<S>): Promise<ExecutionReport<S, Result>> {
+    const report = await this.replayDeterministic(initial, expected.events);
+    assertStateSnapshots(expected.state_snapshots, report.state_snapshots ?? []);
     return report;
   }
   inspect(): AgentInspection { return this.engine.inspect(); }

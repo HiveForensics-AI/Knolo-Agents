@@ -1,0 +1,37 @@
+{
+  "version": 1,
+  "request": {
+    "version": 1,
+    "query": "approved workspace edit",
+    "top_k": 2,
+    "namespace": "coding"
+  },
+  "response": {
+    "version": 1,
+    "artifact": {
+      "version": 1,
+      "artifact_id": "coding-knowledge",
+      "format": "knowledge-image-v5",
+      "fingerprint": "sha256:coding-knowledge-v5"
+    },
+    "evidence": [
+      {
+        "content": "Edits require explicit approval before execution.",
+        "score_micros": 940000,
+        "identity": {
+          "source_id": "policy-guide",
+          "locator": "policy.md#approval",
+          "content_hash": "sha256:policy-approval",
+          "evidence_id": "evidence:policy-approval"
+        }
+      }
+    ],
+    "receipt": {
+      "version": 1,
+      "receipt_id": "receipt:coding-query-1",
+      "plan_digest": "sha256:plan-coding-query-1",
+      "result_digest": "sha256:result-coding-query-1",
+      "artifact_fingerprint": "sha256:coding-knowledge-v5"
+    }
+  }
+}

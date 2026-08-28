@@ -5,7 +5,7 @@ set -eu
 # the repository, or from the configured Git repository when piped from curl.
 
 script_dir=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
-repository=${KNOLO_REPOSITORY:-https://github.com/knolo-ai/knolo-agents}
+repository=${KNOLO_REPOSITORY:-https://github.com/HiveForensics-AI/Knolo-Agents}
 branch=${KNOLO_BRANCH:-main}
 install_prefix=${KNOLO_INSTALL_DIR:-${XDG_BIN_HOME:-"$HOME/.local"}}
 bin_dir="$install_prefix/bin"

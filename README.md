@@ -1,427 +1,159 @@
 # Knolo Agents
 
-Knolo Agents is a **Rust runtime** and **TypeScript SDK** for building reliable,
-inspectable AI agents. An agent run is a deterministic, reviewable control
-plane: typed graphs describe execution, packs grant authority, hosts provide
-effects, and ordered events make replay and auditing possible.
+Knolo Agents is a governed agent framework for building reliable, inspectable
+AI workflows. Rust provides the authoritative runtime and policy boundary;
+TypeScript provides ergonomic graph builders and portable clients. The full
+interactive product system is included in `knolo-agent-system/` as an isolated
+workspace.
 
-This repository is intentionally small and independently usable. Runtime
-behavior lives in Rust; TypeScript exposes ergonomic builders and a limited
-portable engine. Provider SDKs, storage backends, and `@knolo/core`
-implementations stay outside this workspace.
+Knolo is designed for applications that need bounded execution, explicit
+authority, durable state, human approval, and replayable evidence. It is not a
+model provider, vector database, job queue, or replacement for application
+storage.
 
-| Artifact | Role | Published |
+## Release surface
+
+| Component | Purpose | Release status |
 | --- | --- | --- |
-| `knolo-agent-core` | Portable contracts and validation | crates.io (workspace version) |
-| `knolo-agent` | Native scheduler, policy, packs, host effects | crates.io (workspace version) |
-| `knolo-agent-wasm` | Browser/JSON WASM protocol adapter | workspace-only |
-| `knolo-agent-icp` | Internet Computer canister host | workspace-only |
-| `@knolo/agents` | TypeScript builders, engines, ICP client | npm (`0.1.x`) |
+| `knolo-agent-core` | Versioned contracts, graphs, state, events, packs, replay, and policy types | Rust workspace `0.1.1` |
+| `knolo-agent` | Native scheduler, policy enforcement, packs, tools, retrieval, and host effects | Rust workspace `0.1.1` |
+| `knolo-agent-wasm` | Browser and embed JSON/WASM adapter | Workspace-only |
+| `knolo-agent-icp` | Internet Computer deployment adapter | Workspace-only |
+| `@knolo/agents` | TypeScript builders, deterministic engine, and explicit host clients | npm `0.1.3` |
+| `knolo-agent-system/` | Full Knolo Agent product system and interactive implementation source | Independent Cargo workspace |
 
-Current workspace version line: **0.1.x** (early release; APIs may evolve before 1.0).
+`@knolo/core` is a separate dependency boundary. Knolo Agents supports the
+published V5 line (`^5.0.0`) and does not copy or vendor its implementation.
+V4 is supported only through an explicit legacy adapter; there is no silent
+V4 fallback.
 
----
+## Install
 
-## Table of contents
+### Install the Knolo CLI from a checkout
 
-1. [Why it is different](#why-it-is-different)
-2. [Architecture](#architecture)
-3. [Core concepts](#core-concepts)
-4. [Agents in depth](#agents-in-depth)
-5. [Packs and least authority](#packs-and-least-authority)
-6. [Policy, tools, and host effects](#policy-tools-and-host-effects)
-7. [Checkpoints, resume, and HITL](#checkpoints-resume-and-hitl)
-8. [Replay](#replay)
-9. [Retrieval, Cortex, and ClaimGraph](#retrieval-cortex-and-claimgraph)
-10. [Multi-agent handoffs](#multi-agent-handoffs)
-11. [TypeScript SDK (`@knolo/agents`)](#typescript-sdk-knoloagents)
-12. [Rust crates](#rust-crates)
-13. [WASM and ICP](#wasm-and-icp)
-14. [Quickstart](#quickstart)
-15. [Examples](#examples)
-16. [Repository layout](#repository-layout)
-17. [Development](#development)
-18. [Security and compatibility](#security-and-compatibility)
-19. [Documentation index](#documentation-index)
-20. [Status and limitations](#status-and-limitations)
-21. [License](#license)
+Requirements: Rust 1.78+, a Unix-like shell, and a working Cargo installation.
 
----
-
-## Why it is different
-
-Knolo Agents is not an all-in-one prompt, chain, or provider integration layer.
-Compared with LangChain-style frameworks, more of the execution contract lives
-in **explicit data structures** and less in dynamically assembled application
-code:
-
-- Graph transitions, state schemas, budgets, and effect boundaries are
-  **validated before run**.
-- `.knolo` packs are **least-authority policy inputs**, not executable code.
-- Tools, retrieval, Cortex, ClaimGraph, clocks, and storage are **injected by
-  the host**, not discovered implicitly.
-- Rust owns the **authoritative runtime** and deterministic event model.
-- TypeScript provides ergonomic graph construction and a **deliberately limited**
-  portable engine, with **no silent fallback** between engines.
-
-This fits governed workflows, durable automation, replayable control planes, and
-applications that must inspect or constrain agent authority. It is **not** a
-replacement for a model provider, vector store, job queue, or application data
-layer.
-
----
-
-## Architecture
-
-```
-┌──────────────────────────────────────────────────────────────────┐
-│  Application / host (credentials, tools, storage, @knolo/core)  │
-└────────────────────────────┬─────────────────────────────────────┘
-                             │ injects effects & capabilities
-┌────────────────────────────▼─────────────────────────────────────┐
-│  @knolo/agents  │  knolo-agent  │  knolo-agent-icp  │  wasm     │
-│  builders +     │  native       │  ICP canister      │  JSON     │
-│  TS/WASM engine │  scheduler    │  host runtime     │  adapter  │
-└────────────────────────────┬─────────────────────────────────────┘
-                             │ shared contracts
-┌────────────────────────────▼─────────────────────────────────────┐
-│                     knolo-agent-core                             │
-│  graphs · state · events · packs · policy · HITL · handoffs      │
-│  checkpoints · replay · tools · retrieval · redaction            │
-└──────────────────────────────────────────────────────────────────┘
+```bash
+git clone https://github.com/HiveForensics-AI/Knolo-Agents.git
+cd Knolo-Agents
+sh install.sh
+knolo init
 ```
 
-| Layer | Responsibility |
-| --- | --- |
-| `knolo-agent-core` | Portable contracts, graph/state validation, policy types, events, replay, checkpoints, pack declarations, handoffs, HITL. |
-| `knolo-agent` | Native Rust scheduler, host effect boundaries, policy enforcement, pack loading, Cortex/ClaimGraph injection, durable runtime integrations. |
-| `knolo-agent-wasm` | Small versioned JSON/WASM protocol adapter for embedding portable contracts. Not a full host. |
-| `knolo-agent-icp` | ICP canister host for the control plane (Phases 0–4: deterministic runtime, host effects, stable structures, handoff, DX). |
-| `@knolo/agents` | Typed TypeScript builders, deterministic state/routing/suspension engine, explicit WASM integration, ICP client. |
-| `@knolo/core` | Separate peer dependency owned by the consumer; can provide Cortex and ClaimGraph implementations. **Never vendored here.** |
+The installer places the executable in `~/.local/bin` by default. Set
+`KNOLO_INSTALL_DIR` to choose another prefix:
 
-The repository does not vendor `@knolo/core`, credentials, retrieval storage, or
-provider SDKs. See [docs/architecture/README.md](docs/architecture/README.md) and
-[docs/core-boundary.md](docs/core-boundary.md).
-
-### Trust boundaries
-
-1. **Untrusted** — graph definitions and pack bytes supplied by authors.
-2. **Trusted compiler** — pack → immutable `CompiledPolicyV1`.
-3. **Host-owned effects** — tool implementations, network, LLM, storage.
-4. **External core** — `@knolo/core` (Cortex / ClaimGraph), if injected.
-5. **Durable stores** — checkpoints and event logs (must write atomically).
-
----
-
-## Core concepts
-
-| Concept | What it is |
-| --- | --- |
-| **Agent** | A compiled graph + state schema + (optional) pack authority, bound to an engine or host runtime. |
-| **Graph** | Versioned nodes, transitions, entry, cycles, and execution limits. |
-| **Node** | A unit of work with declared reads/writes and an outcome (`continue`, `route`, `suspend`, `terminate`, `fail`). |
-| **State schema** | Typed JSON paths (`String`, `Number`, `Bool`, `Array`, `Object`, `Null`) validated on every snapshot. |
-| **State transaction** | A node reads an immutable snapshot and returns a patch against its revision; failures do not partially commit. |
-| **Pack (`.knolo`)** | Reviewable authority: capabilities, namespaces, tools, budgets. Not executable code. |
-| **Policy** | Compiled grants + budget ledger; every effect is checked before execution. |
-| **Event** | Ordered, versioned control-plane record (start, route, suspend, tool call, terminate, …). |
-| **Checkpoint** | Durable snapshot bound to graph/pack/policy/implementation/contract hashes. |
-| **Handoff** | Multi-agent envelope that projects state and **narrows** authority to a child graph. |
-| **HITL** | Human-in-the-loop suspension with expiry, resume schema, and opaque token. |
-
----
-
-## Agents in depth
-
-An agent is not a free-form chat loop. It is a **validated control-plane program**:
-
-1. **Define** a state schema and nodes (handlers or host-side executors).
-2. **Wire** transitions (routes) from non-terminal nodes to successors.
-3. **Declare** an entry node and at least one terminal node.
-4. **Optionally bind** a pack that must grant every capability the graph needs.
-5. **Compile** → content hash used for resume and replay compatibility.
-6. **Load** into an engine (`typescript` | `wasm`) or native/ICP host.
-7. **Run** from initial state; the scheduler steps nodes, applies patches, emits
-   events, and checkpoints before external suspension.
-
-### Node outcomes
-
-Every node returns one of:
-
-| Outcome | Meaning |
-| --- | --- |
-| `continue` | Apply optional patch; follow the default / continue edge. |
-| `route` | Apply optional patch; follow a named transition route. |
-| `suspend` | Pause for HITL, host effect, or step-slice; checkpoint first. |
-| `terminate` | End the run with a result (and optional final patch). |
-| `fail` | Error; may be marked retryable under runtime policy. |
-
-### State transactions
-
-A node sees a **read-only snapshot** at a known revision. It may only write paths
-declared on the node. The runtime rejects:
-
-- stale base revisions
-- undeclared read/write paths
-- type mismatches against the schema
-- partial commits when an effect fails
-
-Successful reduction increments the revision once and records provenance
-(execution id, node id, event sequence). See
-[docs/architecture/state-transactions.md](docs/architecture/state-transactions.md).
-
-### Graph validation
-
-Compilation rejects (among other issues):
-
-- unsupported contract versions
-- duplicate or malformed identifiers
-- missing entry or terminal nodes
-- unreachable nodes
-- unknown transition endpoints / duplicate routes
-- invalid read/write paths
-- non-positive limits
-
-See [docs/architecture/graph-validation.md](docs/architecture/graph-validation.md).
-
-### Execution limits
-
-Graphs carry `ExecutionLimitsV1`:
-
-- `max_steps`
-- `max_tokens`
-- `max_cost_micros`
-- `timeout_ms`
-
-Native packs may also declare `budget.max_steps` / `budget.max_cost_micros`.
-Those fields are validated today; full shared ownership with pack policy is
-still evolving (see [FUTURE.md](FUTURE.md)). Tool-level resource budgets are
-enforced separately via the pack budget ledger.
-
-### What each engine can do
-
-| Capability | TypeScript engine | WASM adapter | Native `knolo-agent` | ICP canister |
-| --- | --- | --- | --- | --- |
-| State + routing | yes | via host | yes | yes |
-| Suspension | yes | via host | yes | yes |
-| Tool calls / budgets | host / Rust | host | yes | pack-gated |
-| Retrieval | host inject | host | host inject | knowledge or mock |
-| LLM | no (host) | host | host | ic-llm |
-| Durable checkpoints | host | host | filesystem / inject | stable structures |
-| Multi-agent handoff | helpers | — | types + policy | accept/forward |
-| Deterministic event replay | control-plane | — | full modes | event log |
-
-Selecting `engine: "wasm"` without an adapter is an error. Engines **never**
-silently fall back to another engine.
-
----
-
-## Packs and least authority
-
-A pack is an **authority declaration**. It grants capabilities, namespaces,
-tools (with argument constraints), bindings, and hard resource budgets. The
-runtime compiles grants into immutable policy and **denies unauthorized effects
-before execution**. Missing grants deny by default.
-
-Example native pack (`examples/packs/basic.knolo`):
-
-```yaml
-version: 1
-id: examples.basic
-authority:
-  capabilities: [state.read, state.write]
-  namespaces: [examples.basic]
-budget:
-  max_steps: 4
-  max_calls: 1
-  max_units: 10
-  max_duration_ms: 1000
-  max_cost_micros: 100
+```bash
+KNOLO_INSTALL_DIR="$HOME/.local" sh install.sh
 ```
 
-### Loading packs (Rust)
+The supported remote installation form is:
 
-| API | Purpose |
-| --- | --- |
-| `load_native_pack` / `load_native_pack_file` | Load native `.knolo` authority from bytes or path. |
-| `load_agent_native` / `load_agent_native_file` | Bind pack authority to an explicit agent reference (graph/definition overlay). |
-| `load_agent` / `load_agent_file` | JSON companion manifest (`.knolo.json`) for development/compatibility. |
+```bash
+curl -fsSL https://raw.githubusercontent.com/HiveForensics-AI/Knolo-Agents/main/install.sh | sh
+```
 
-Graph and definition references are an **explicit overlay**: pack files own
-authority; agent graphs belong to the surrounding core/runtime. Loading fails
-before execution when an agent requests a capability or namespace absent from
-native authority. Credentials and implementation details never belong in a pack.
+The installer accepts `KNOLO_VERSION`, `KNOLO_BINARY_URL`, and
+`KNOLO_USE_SOURCE=1` for release selection and source-build control. See the
+[installation guide](docs/install.md) for platform and model setup details.
 
-Scenario packs under `examples/packs/` intentionally grant only what each demo
-needs (`basic`, `tools`, `retrieval`, `checkpoint`, `hitl`, `handoff`,
-`replay`, `claims`, `cortex`, `wasm`, …).
-
-Full write-up: [docs/packs.md](docs/packs.md).
-
----
-
-## Policy, tools, and host effects
-
-### Policy enforcement
-
-Before every effect the runtime validates:
-
-- versioned call contract
-- tool allowlist
-- namespace and capability binding
-- argument contract
-- pack constraints
-- remaining budget
-
-Usage is charged after execution. Denials are structured (`PolicyDenialV1`) and
-auditable. Resume and live replay require fresh explicit authorization. Host
-credentials are never serialized into events or checkpoints.
-
-See [docs/policy-enforcement.md](docs/policy-enforcement.md).
-
-### Tools
-
-Tools pair a **serializable definition** with a **host-owned implementation**:
-
-- stable tool id, capability, namespace
-- JSON argument/result contracts
-- side-effect metadata
-- resource usage (`calls`, `units`, `duration_ms`)
-
-Implementations remain outside checkpoints. Unit tests should use deterministic
-local fakes and must not access the network.
-
-See [docs/tools.md](docs/tools.md).
-
-### Host injection (Rust)
-
-The native runtime expects the host to supply:
-
-- `NodeExecutor` — per-node logic
-- `EventSink` — ordered event emission
-- `Clock` — timestamps (injectable; fixed clocks in tests)
-- `CheckpointStore` — durable atomic writes
-- `ToolRegistry` / tool implementations
-- optional Cortex / ClaimGraph / retrieval adapters
-
----
-
-## Checkpoints, resume, and HITL
-
-### Checkpoints
-
-A checkpoint contains:
-
-- state snapshot (schema id, revision, value, provenance)
-- pending node
-- event cursor
-- accumulated steps / tokens / cost
-- artifact hashes: graph, pack, policy, node implementation, contract
-
-Stores must write atomically. The filesystem store uses temp file + rename;
-production hosts should provide equivalent durability.
-
-Resume verifies **every** artifact hash before accepting typed input. Stale HITL
-tokens or changed authority fail closed.
-
-See [docs/checkpoints.md](docs/checkpoints.md).
-
-### Human-in-the-loop (HITL)
-
-`SuspensionV1` binds:
-
-- reason and requested action
-- review context
-- expiry (`expires_at_ms`)
-- resume schema hash
-- artifact hashes
-- nonce → opaque resume token
-
-`validate_resume` rejects expired tokens, wrong schema, or non-object input.
-
----
-
-## Replay
-
-Replay verifies contiguous ordered events and artifact hashes. Modes:
-
-| Mode | Behavior |
-| --- | --- |
-| `verify_only` | Check history integrity without re-running effects. |
-| `mocked_effects` | Re-execute control plane; substitute recorded tool/retrieval results. |
-| `live_effects` | Repeat external effects only with **separate** authorization. |
-
-Replay never silently upgrades contracts or bypasses current policy.
-
-TypeScript `Agent.replay` validates event contiguity; `replayDeterministic`
-re-runs the portable graph and compares the control-plane trace (excluding
-wall-clock timestamps). Full per-step state snapshot replay is on the roadmap
-([FUTURE.md](FUTURE.md)).
-
-See [docs/replay.md](docs/replay.md).
-
----
-
-## Retrieval, Cortex, and ClaimGraph
-
-### Retrieval
-
-Native retrieval returns `RetrievalResultV1`: ranked evidence with content,
-integer score (`score_micros`), and provenance (`source_id`, locator,
-content hash). Retrieval is a **policy-gated host capability**, not hidden
-prompt augmentation. Persist the result or event reference so replay can use
-recorded evidence without repeating external reads.
-
-See [docs/retrieval.md](docs/retrieval.md).
-
-### Cortex and ClaimGraph (`@knolo/core` boundary)
-
-Knolo Agents depends on, but is separate from, `@knolo/core`. That peer may
-provide:
-
-- **Cortex** — query and context assembly
-- **ClaimGraph** — read and commit of claims (with mutation approval)
-
-This repository only defines **narrow injection interfaces**. It does not
-contain core source, storage, credentials, or release process. Consumers install
-a compatible `@knolo/core` (`^3.5.0` peer on the TypeScript package) themselves.
-
-See [docs/core-boundary.md](docs/core-boundary.md).
-
----
-
-## Multi-agent handoffs
-
-Subgraph delegation uses `HandoffEnvelopeV1`:
-
-- `destination` — child graph id
-- `state_projection` — map of child JSON pointers → parent pointers
-- `authority_projection` — capabilities, namespaces, max steps, max cost
-- `return_contract` — versioned return shape
-
-Authority must be a **strict narrowing** of parent execution **and** pack
-policy. Escalation (extra capability, higher budget, etc.) fails closed
-(`AuthorityEscalation`). On ICP, `accept_handoff` / `forward_handoff` implement
-the same envelope across canisters.
-
-TypeScript helper: `assertNarrowAuthority(child, parent, pack)`.
-
----
-
-## TypeScript SDK (`@knolo/agents`)
-
-### Install
+### Install the TypeScript SDK
 
 ```bash
 pnpm add @knolo/agents
-# optional peer for Cortex / ClaimGraph
+```
+
+The SDK requires Node 20+. `@knolo/core` is optional and is needed only when an
+application injects Cortex, ClaimGraph, or other core capabilities:
+
+```bash
 pnpm add @knolo/core
 ```
 
-Requires **Node 20+**. Package manager in this monorepo: **pnpm 9.15**.
+### Build the full agent system from source
 
-### Define and run an agent
+`knolo-agent-system/` is the full product composition layer. It contains the
+interactive shell/TUI, session lifecycle, model integration, workspace tools,
+sandboxing, MCP/ACP, plugins, and operational surfaces. It is intentionally an
+independent Cargo workspace because it has a separate dependency graph and
+source/provenance boundary.
+
+From the repository root:
+
+```bash
+cargo build --manifest-path knolo-agent-system/Cargo.toml \
+  -p xai-grok-pager-bin --release
+```
+
+This source workspace currently produces the historical development binary
+`xai-grok-pager`; the supported Knolo runtime installation produces `knolo`.
+Historical `xai-*` names are retained inside the source workspace where
+required for provenance and dependency compatibility. Product actions still
+cross the Knolo governed adapter before host effects are executed.
+
+## Quick start
+
+### Run a bounded local agent
+
+```bash
+knolo init
+knolo agent create --template coding coding-agent
+knolo agent inspect coding-agent
+knolo run --agent coding-agent "list the files in this workspace"
+```
+
+Read-only work can run immediately. Writes require explicit approval:
+
+```bash
+knolo run --agent coding-agent --yes \
+  "create a short TODO.md describing the next engineering tasks"
+```
+
+Use headless mode for automation and CI:
+
+```bash
+knolo run --agent coding-agent --headless "summarize the repository"
+```
+
+Inspect the resulting session:
+
+```bash
+knolo session list
+knolo session logs <session-id>
+knolo session replay <session-id>
+knolo session export <session-id>
+```
+
+### Connect an OpenAI-compatible model
+
+Credentials stay in the environment; Knolo stores only the environment
+variable name. The same interface works with Ollama, LM Studio, llama.cpp,
+vLLM, and compatible cloud endpoints.
+
+```bash
+ollama serve
+ollama pull qwen2.5-coder:7b
+
+knolo model add local \
+  --provider ollama \
+  --model qwen2.5-coder:7b \
+  --base-url http://127.0.0.1:11434/v1
+knolo agent set-model coding-agent local
+knolo run --agent coding-agent "inspect the workspace and report what needs attention"
+```
+
+Check the environment before a model-backed run:
+
+```bash
+knolo doctor
+```
+
+The model proposes work. Knolo remains responsible for capability checks,
+workspace scope, approvals, budgets, tool execution, observations, and
+termination. See the [CLI guide](docs/cli.md) for profiles, sessions, and
+approval behavior.
+
+### Define a TypeScript agent
 
 ```ts
 import {
@@ -463,367 +195,135 @@ const report = await Agent.load({ definition, engine: "typescript" }).run({
 console.log(report.status); // { type: "terminated", result: 1 }
 ```
 
-### Public surface
+The TypeScript engine is a deterministic portable subset for state, routing,
+and suspension. Select `engine: "wasm"` only with an explicit adapter. Engines
+never silently fall back to one another. Tools, retrieval, credentials, and
+durable effects remain host-bound.
 
-| Module | Exports (high level) |
+## Architecture and authority
+
+```text
+application / host
+  credentials, tools, storage, model provider, @knolo/core
+            │ injected effects and capabilities
+            ▼
+knolo-agent-system │ @knolo/agents │ knolo-agent │ ICP/WASM adapters
+            │ governed integration boundary
+            ▼
+knolo-agent-core
+  graphs · state · events · packs · policy · HITL · replay · retrieval
+```
+
+The execution boundary is deliberately explicit:
+
+1. A graph defines typed state, nodes, transitions, limits, and an entry point.
+2. A pack declares the capabilities, namespaces, tools, and budgets available
+   to the graph.
+3. Compilation validates the graph and produces an artifact hash.
+4. The runtime checks every effect before execution and records ordered events.
+5. Checkpoints bind state to graph, pack, policy, implementation, and contract
+   hashes before suspension or resume.
+6. Replay verifies the control-plane history without silently repeating effects.
+
+Packs are declarations of authority, not executable code. Missing capabilities
+are denied by default. Host implementations own network access, files,
+credentials, model calls, storage, and external side effects.
+
+### The `@knolo/core` boundary
+
+Applications may inject published Knolo core capabilities such as Cortex,
+ClaimGraph, V5 Knowledge Images, verification, and query receipts. The agent
+framework preserves evidence identity and receipt metadata but does not own the
+core store.
+
+The TypeScript V5 adapter is exported from `@knolo/agents`. Product-originated
+requests pass through
+`knolo-agent-system/crates/integration/knolo-governed-adapter`; that adapter
+normalizes and validates the request, while the native Knolo host continues to
+own policy, approvals, execution, and effect receipts.
+
+### Deployment adapters
+
+ICP and browser WASM are deployment targets, not competing products:
+
+| Adapter | Role |
 | --- | --- |
-| `builder` | `stateSchema`, `node`, `terminal`, `transition`, `entry`, `limits`, `defineAgent`, `compile`, `fromPack` |
-| `agent` | `Agent.load`, `run`, `stream`, `resume`, `replay`, `replayDeterministic`, `inspect` |
-| `engine` | TypeScript engine; WASM engine + `WasmProtocolAdapter` |
-| `contracts` | Versioned types: graphs, events, checkpoints, tools, retrieval |
-| `cortex` / `claims` | Injection helpers for core capabilities |
-| `multi-agent` | `AuthorityV1`, `HandoffEnvelopeV1`, `assertNarrowAuthority` |
-| `hitl` | Suspension / resume validation helpers |
-| `replay` | Artifact hashes and replay request validation |
-| `icp` | `IcpAgentRuntimeClient` + candid-aligned DTOs |
+| `knolo-agent-wasm` | Small JSON/WASM protocol for browser or embedded hosts |
+| `knolo-agent-icp` | Candid, stable-memory, timers, and ICP host effects |
+| `@knolo/agents` ICP client | Typed client for an externally deployed canister |
 
-### Engine selection
-
-```ts
-// Portable deterministic subset (state, routing, suspension)
-Agent.load({ definition, engine: "typescript" });
-
-// Requires explicit adapter — never falls back
-Agent.load({ definition, engine: "wasm", wasm: myAdapter });
-```
-
-Tool calls, retrieval, and durable effects remain host-bound or Rust/WASM/ICP
-integrations.
-
-### ICP client (TypeScript)
-
-```ts
-import { IcpAgentRuntimeClient, portableCounterDefinition } from "@knolo/agents";
-
-// actor from @dfinity/agent + your dfx IDL (optional peers)
-const client = new IcpAgentRuntimeClient(actor);
-await client.loadDefinition(portableCounterDefinition());
-const report = await client.startExecution("run-1", {
-  schema_id: "counter-state",
-  revision: 0,
-  value: { count: 0 },
-  provenance: null,
-});
-```
-
-Package README: [packages/agents/README.md](packages/agents/README.md).
-
----
-
-## Rust crates
-
-### `knolo-agent-core`
-
-Portable, provider-neutral contracts:
-
-- `graph`, `state`, `node`, `event`
-- `pack`, `policy`, `tool`, `retrieval`
-- `checkpoint`, `replay`, `hitl`, `handoff`
-- `redaction`, `contract`, `wasm` protocol types
-
-### `knolo-agent`
-
-Authoritative native runtime:
-
-- `runtime::Scheduler` — step loop, resume, budgets, events
-- `pack` — native and JSON pack loading
-- `policy` — budget ledger and denial paths
-- `tool` / `host` — definitions and registries
-- `checkpoint`, `replay`, `hitl`, `retrieval`
-- `cortex`, `claims`, `multi_agent` — injection and authority
-
-```rust
-// Conceptually: bind graph + schema + executor + sink + clock + store + policy
-// then Scheduler::run(execution_id, initial_state, cancelled)
-// or Scheduler::resume(checkpoint, cancelled)
-```
-
-### `knolo-agent-wasm`
-
-WASM-safe JSON protocol adapter. Build:
-
-```bash
-cargo check -p knolo-agent-wasm --target wasm32-unknown-unknown
-```
-
-### `knolo-agent-icp`
-
-ICP canister embedding `Scheduler` + ICP host effects (not the browser WASM
-adapter). Workspace-only (`publish = false`). Build:
-
-```bash
-cargo build -p knolo-agent-icp --target wasm32-unknown-unknown --release
-# or
-bash scripts/icp/build.sh
-```
-
----
-
-## WASM and ICP
-
-These are **two different** `wasm32-unknown-unknown` products:
-
-| Path | Crate | Role |
-| --- | --- | --- |
-| Browser / embed JSON protocol | `knolo-agent-wasm` | Thin adapter; no FS/network/clock unless host supplies them |
-| Internet Computer host | `knolo-agent-icp` | Full control-plane host: Candid, effects, stable memory, handoffs |
-
-### ICP phases (summary)
-
-| Phase | Delivered |
-| --- | --- |
-| 0 | ADR, constraints matrix, wasm32 build confirmation |
-| 1 | Deterministic scheduler in-canister; load/start/step/resume; events & checkpoints |
-| 2 | Pack-gated tools, ic-llm, retrieval (knowledge or mock), timers, budgets |
-| 3 | `ic-stable-structures` v1, limits/allowlists, multi-agent handoff, ops queries |
-| 4 | DX scripts, TypeScript client, cost & security guides |
-
-Local dfx example: [examples/icp-agent-canister/](examples/icp-agent-canister/).
-
-Architecture docs:
-
-- [ADR-001](docs/architecture/adr-001-icp-agent-runtime.md)
-- [Constraints matrix](docs/architecture/icp-constraints-matrix.md)
-- [Cost guide](docs/architecture/icp-cost-guide.md)
-- [Security checklist](docs/architecture/icp-security-checklist.md)
-
-WASM notes: [docs/wasm.md](docs/wasm.md).
-
----
-
-## Quickstart
-
-### Prerequisites
-
-- **Rust** 1.78 or newer
-- **Node** 20 or newer (TypeScript package)
-- **pnpm** 9.15 (via Corepack)
-- Optional ICP: `wasm32-unknown-unknown` target, dfx 0.20.x
-
-### Rust
-
-```bash
-cargo install --path crates/knolo-agent --bin knolo
-knolo init
-knolo agent list
-knolo run --agent coding "list files"
-cargo test --workspace
-cargo run -p knolo-agent --example pack_e2e
-cargo run -p knolo-agent --example complete
-```
-
-Use `knolo run --headless` for JSON output in scripts and CI. See
-[docs/install.md](docs/install.md) for the shell installer and local-model
-setup, and [docs/cli.md](docs/cli.md) for profile creation, approvals, and
-model-backed task execution.
-
-### Product commands
-
-```bash
-# Create a profile and inspect its authority
-knolo agent create --template coding my-coder
-knolo agent inspect my-coder
-
-# Configure a local OpenAI-compatible model
-knolo model add local --provider ollama --model qwen2.5-coder:7b \
-  --base-url http://127.0.0.1:11434/v1
-knolo agent set-model my-coder local
-
-# Run interactively or as JSON for automation
-knolo run --agent my-coder "list files"
-knolo run --agent my-coder --headless "read README.md"
-
-# Resume or stop a persisted session
-knolo session list
-knolo session logs <session-id>
-knolo session resume <session-id>
-knolo session stop <session-id>
-```
-
-Write actions require explicit approval. A configured model produces plans
-through the OpenAI-compatible adapter; a custom host executable can still be
-supplied with `--plan-command`. The runtime enforces capabilities, approvals,
-path safety, and autonomy limits around every returned action.
-
-`pack_e2e` loads a native pack fixture, proves an allowed and denied tool call,
-and checks deterministic control-plane replay.
-
-### TypeScript
-
-```bash
-corepack enable
-pnpm install --frozen-lockfile
-pnpm --filter @knolo/agents check
-pnpm --filter @knolo/agents test
-```
-
-### ICP (local)
-
-```bash
-rustup target add wasm32-unknown-unknown
-bash scripts/icp/build.sh
-bash scripts/icp/deploy-local.sh
-bash scripts/icp/load-definition.sh
-# handoff smoke:
-cd examples/icp-agent-canister && bash scripts/run-handoff.sh
-```
-
----
-
-## Examples
-
-| Path | Description |
-| --- | --- |
-| [crates/knolo-agent/examples/pack_e2e.rs](crates/knolo-agent/examples/pack_e2e.rs) | Pack → policy → allowed/denied tool → replay |
-| [crates/knolo-agent/examples/complete.rs](crates/knolo-agent/examples/complete.rs) | Cortex, ClaimGraph, handoff, replay request shapes |
-| [examples/typescript/complete.ts](examples/typescript/complete.ts) | Full TS walkthrough: graph, tools, retrieval, HITL, WASM inspect |
-| [examples/packs/](examples/packs/) | Scenario packs (minimal grants per scenario) |
-| [examples/icp-agent-canister/](examples/icp-agent-canister/) | dfx deploy, deterministic run, handoff smoke |
-| [contracts/](contracts/) | JSON schemas and deterministic fixtures |
-
-More context: [examples/README.md](examples/README.md).
-
----
+ICP is optional. The full agent system remains the product composition layer.
 
 ## Repository layout
 
-```
-.
-├── crates/
-│   ├── knolo-agent-core/     # Portable contracts
-│   ├── knolo-agent/          # Native runtime + examples
-│   ├── knolo-agent-wasm/     # JSON/WASM protocol adapter
-│   └── knolo-agent-icp/      # ICP canister host
-├── packages/
-│   └── agents/               # @knolo/agents TypeScript package
-├── contracts/
-│   ├── schemas/              # JSON Schema (tools, retrieval, policy denial)
-│   └── fixtures/             # Conformance / policy / execution fixtures
-├── examples/
-│   ├── packs/                # .knolo authority declarations
-│   ├── typescript/           # TS end-to-end sample
-│   └── icp-agent-canister/   # dfx project + fixtures + scripts
-├── knolo-product/            # adapted product-runtime harness source
-├── docs/                     # Architecture and subsystem docs
-├── scripts/
-│   ├── hygiene.sh
-│   ├── check-packs.mjs
-│   ├── check-links.mjs
-│   └── icp/                  # build, deploy-local, load-definition, init-template
-├── AGENTS.md                 # Contributor guide for agents working in-repo
-├── CONTRIBUTING.md
-├── GOVERNANCE.md
-├── SECURITY.md
-├── FUTURE.md
-└── CHANGELOG.md
+```text
+crates/knolo-agent-core/   portable contracts and validation
+crates/knolo-agent/        native runtime, policy, packs, and host effects
+crates/knolo-agent-wasm/   browser/embed adapter
+crates/knolo-agent-icp/    optional ICP deployment adapter
+packages/agents/           @knolo/agents TypeScript package
+contracts/                 schemas and deterministic fixtures
+examples/                  Rust, TypeScript, pack, and ICP examples
+knolo-agent-system/        full product system, isolated workspace
+docs/                      architecture, installation, CLI, security, releases
 ```
 
----
+## Examples and documentation
+
+- [Examples](examples/README.md) — deterministic Rust and TypeScript workflows
+- [Installation and model setup](docs/install.md)
+- [CLI guide](docs/cli.md)
+- [Architecture](docs/architecture/README.md)
+- [Full agent system](knolo-agent-system/README.md)
+- [TypeScript package](packages/agents/README.md)
+- [Packs and policy](docs/packs.md), [tools](docs/tools.md), and
+  [retrieval](docs/retrieval.md)
+- [Checkpoints](docs/checkpoints.md) and [replay](docs/replay.md)
+- [Core boundary](docs/core-boundary.md) and [compatibility](docs/compatibility.md)
+- [Release process](docs/releasing.md)
+- [Roadmap](FUTURE.md) and [changelog](CHANGELOG.md)
 
 ## Development
 
-Contributor conventions are in [AGENTS.md](AGENTS.md) and
-[CONTRIBUTING.md](CONTRIBUTING.md).
-
-### Commands
+Use the committed pnpm lockfile and the package manager declared in
+`package.json`. Unit tests are deterministic and must not require network
+access.
 
 ```bash
-# Rust
+# Rust workspace
 cargo fmt --all --check
 cargo check --workspace
 cargo test --workspace
 
-# TypeScript
+# TypeScript package and examples
 pnpm install --frozen-lockfile
 pnpm --filter @knolo/agents check
 pnpm --filter @knolo/agents test
+pnpm --filter @knolo/agents exec tsc -p ../../examples/tsconfig.json --noEmit
 
-# Hygiene (packs, links, etc.)
+# Repository hygiene
 bash scripts/hygiene.sh
 ```
 
-### Guidelines
+Changes to the imported product workspace should be validated narrowly: test
+the governed adapter and any intentionally changed bridge, not the entire
+unchanged upstream-derived suite. Read [AGENTS.md](AGENTS.md) and
+[CONTRIBUTING.md](CONTRIBUTING.md) before making changes.
 
-- Keep runtime behavior in **Rust**; keep ergonomic APIs in **TypeScript**.
-- Prefer explicit configuration and validation over hidden behavior.
-- Add focused, deterministic tests; **no network** in unit tests.
-- Update schemas and fixtures together when a contract changes.
-- Do not vendor `@knolo/core` or commit secrets, build artifacts, or editor state.
-- Preserve public API compatibility unless the change is intentional and documented.
+## Compatibility and security
 
-Releases: [docs/releasing.md](docs/releasing.md).
+- Rust 1.78+ and Node 20+ are supported baselines.
+- Contract versions are independent of package versions.
+- Resume and replay require exact artifact hashes.
+- Unknown capabilities and malformed versioned inputs fail closed.
+- Credentials remain in host memory or environment variables.
+- Handoffs may only narrow authority and budgets.
+- `@knolo/core` V5 is the supported published line; V4 is legacy and explicit.
 
----
-
-## Security and compatibility
-
-### Security model
-
-Validate all versioned input; deny unknown capabilities; constrain arguments and
-budgets; redact sensitive event fields; bind resumes to artifact hashes; narrow
-handoffs; keep secrets only in host memory.
-
-Report vulnerabilities per [SECURITY.md](SECURITY.md). Broader notes:
-[docs/security.md](docs/security.md).
-
-### Compatibility
-
-- Contracts are versioned **independently** of package versions.
-- Version 1 readers reject unknown major versions.
-- Resume/replay require **exact** artifact hashes.
-- Rust: **1.78+**
-- TypeScript: **Node 20+**, optional `@knolo/core` **^3.5.0**
-- TypeScript and WASM exchange only documented JSON contracts
-
-See [docs/compatibility.md](docs/compatibility.md).
-
----
-
-## Documentation index
-
-| Topic | Document |
-| --- | --- |
-| Docs home | [docs/README.md](docs/README.md) |
-| Architecture overview | [docs/architecture/README.md](docs/architecture/README.md) |
-| State transactions | [docs/architecture/state-transactions.md](docs/architecture/state-transactions.md) |
-| Graph validation | [docs/architecture/graph-validation.md](docs/architecture/graph-validation.md) |
-| Packs | [docs/packs.md](docs/packs.md) |
-| Policy | [docs/policy-enforcement.md](docs/policy-enforcement.md) |
-| Tools | [docs/tools.md](docs/tools.md) |
-| Retrieval | [docs/retrieval.md](docs/retrieval.md) |
-| Checkpoints | [docs/checkpoints.md](docs/checkpoints.md) |
-| Replay | [docs/replay.md](docs/replay.md) |
-| WASM | [docs/wasm.md](docs/wasm.md) |
-| Core boundary | [docs/core-boundary.md](docs/core-boundary.md) |
-| ICP ADR | [docs/architecture/adr-001-icp-agent-runtime.md](docs/architecture/adr-001-icp-agent-runtime.md) |
-| Roadmap | [FUTURE.md](FUTURE.md) |
-| Changelog | [CHANGELOG.md](CHANGELOG.md) |
-
----
-
-## Status and limitations
-
-The project is an early **0.1.x** release.
-
-**Solid today**
-
-- Rust authoritative runtime with pack-constrained policy
-- Ordered events, graph hashing, checkpoint artifact binding
-- TypeScript portable engine (state, routing, suspension) with explicit engines
-- Host-injected tools, retrieval, Cortex, ClaimGraph
-- ICP control-plane host Phases 0–4 (workspace-only)
-
-**Deliberately incomplete / evolving**
-
-- Full state-level TypeScript replay (beyond control-plane trace)
-- Standalone full WASM execution (adapter exists; not a complete host)
-- Shared pack ownership of run budgets (`max_steps` / `max_cost_micros` on native packs validated but not yet fully policy-compiled)
-- Production multi-agent and live-core examples
-- Evaluation harnesses and pre-1.0 API freeze
-
-Details: [FUTURE.md](FUTURE.md).
-
----
+Report vulnerabilities using [SECURITY.md](SECURITY.md). Adapted source and
+third-party notices are documented in
+[knolo-agent-system/PROVENANCE.md](knolo-agent-system/PROVENANCE.md) and
+[knolo-agent-system/THIRD-PARTY-NOTICES](knolo-agent-system/THIRD-PARTY-NOTICES).
 
 ## License
 

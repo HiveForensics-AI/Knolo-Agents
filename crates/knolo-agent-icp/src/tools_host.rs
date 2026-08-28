@@ -4,7 +4,9 @@ use knolo_agent::policy::BudgetLedger;
 use knolo_agent::tool::ToolImplementation;
 use knolo_agent_core::{
     pack::CompiledPolicyV1,
-    tool::{ResourceBudgetV1, ResourceUsageV1, ToolCallV1, ToolDefinition, ToolResultV1},
+    tool::{
+        ResourceBudgetV1, ResourceUsageV1, RetryClassV1, ToolCallV1, ToolDefinition, ToolResultV1,
+    },
     CapabilityId, CoreError, NamespaceId, ToolId,
 };
 use serde_json::{json, Value};
@@ -33,6 +35,7 @@ impl EchoTool {
                     "properties": { "echo": { "type": "string" } },
                     "required": ["echo"]
                 }),
+                retry_class: RetryClassV1::Idempotent,
             },
         }
     }
@@ -94,6 +97,7 @@ impl HttpsGetTool {
                     },
                     "required": ["status", "body"]
                 }),
+                retry_class: RetryClassV1::NonIdempotent,
             },
             allow,
             canned: None,

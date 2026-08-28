@@ -16,10 +16,10 @@ another installation prefix:
 KNOLO_INSTALL_DIR=/usr/local sh install.sh
 ```
 
-Once releases are published, the supported remote installation form will be:
+The supported remote installation form is:
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/knolo-ai/knolo-agents/main/install.sh | sh
+curl -fsSL https://raw.githubusercontent.com/HiveForensics-AI/Knolo-Agents/main/install.sh | sh
 ```
 
 The remote form uses a prebuilt release binary when one is available and

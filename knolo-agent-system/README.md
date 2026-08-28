@@ -9,7 +9,8 @@ capabilities, workspace scope, budgets, and approval requirements.
 The public entry point is the `knolo` CLI:
 
 ```bash
-cargo install --path ../crates/knolo-agent --bin knolo
+# Run from the repository root.
+cargo install --path crates/knolo-agent --bin knolo
 knolo init
 knolo agent list
 knolo run --agent coding "list files"
@@ -22,14 +23,32 @@ From the parent repository, see:
 - [`docs/cli.md`](../docs/cli.md) — CLI commands, profiles, approvals,
   sessions, and model adapters;
 - [`docs/install.md`](../docs/install.md) — installation and model setup;
-- [`examples/README.md`](examples/README.md) — release examples for standalone
-  and integrated use.
+- [`examples/README.md`](../examples/README.md) — release examples for
+  standalone and integrated use.
+
+## Build this workspace
+
+This directory is source-distributed as part of the Knolo Agents repository; it
+is not a separately published Rust workspace. Build the adapted interactive
+product from the repository root with:
+
+```bash
+cargo build --manifest-path knolo-agent-system/Cargo.toml \
+  -p xai-grok-pager-bin --release
+```
+
+The resulting development binary is `xai-grok-pager`. End users should install
+the supported `knolo` CLI from the parent workspace using
+[`install.sh`](../install.sh). The historical `xai-*` names remain in this
+workspace for provenance and dependency compatibility.
 
 ## Examples
 
 Knolo Agent can run as a standalone CLI or as part of the wider Knolo Agents
-platform. The product name is **Knolo Agent**; `knolo-product/` is only the
-repository path for the implementation source held in this workspace.
+platform. The product name is **Knolo Agent** and this directory is the full
+`knolo-agent-system/` product workspace. It contains the interactive product
+system adapted from Grok and integrated toward the governed Knolo runtime; it
+is not the portable contract crate and it is not an ICP-only product.
 
 ### Standalone CLI
 
@@ -71,7 +90,8 @@ agent definition → profile and pack → Knolo Agent runtime → host effects
                          events, checkpoints, replay, report
 ```
 
-The workspace integration is available from the parent repository:
+The workspace integration is available from the parent repository through the
+Knolo runtime and host adapters:
 
 ```bash
 cargo install --path crates/knolo-agent --bin knolo
@@ -101,6 +121,12 @@ knolo run --agent coding-agent "inspect the workspace and summarize the next ste
 The model proposes work; Knolo Agent remains responsible for policy, approvals,
 tool execution, budgets, observations, and termination.
 
+Product-originated tool requests cross the
+`crates/integration/knolo-governed-adapter` seam first. That adapter performs
+only stable `ToolCallV1` normalization and contract validation; the native
+Knolo host remains responsible for compiled pack policy, approvals, execution,
+and effect receipts.
+
 ### Agent run lifecycle
 
 An agent run follows a bounded control-plane lifecycle:
@@ -123,7 +149,7 @@ not.
 
 ## What this runtime contributes
 
-The implementation source provides the runtime capabilities behind Knolo Agent:
+The implementation source provides the full product capabilities behind Knolo Agent:
 
 - interactive terminal rendering and session UI;
 - agent lifecycle, conversation state, compaction, and model turns;
@@ -158,9 +184,13 @@ cargo test --workspace
 pnpm --filter @knolo/agents check
 ```
 
-The implementation workspace remains isolated from the parent Cargo workspace.
-Knolo Agent remains authoritative for portable contracts, policy, packs, events,
-checkpoints, replay, and host effect authorization.
+The implementation workspace remains isolated from the parent Cargo workspace
+because it has a separate dependency graph and provenance boundary. The parent
+Knolo runtime remains authoritative for portable contracts, policy, packs,
+events, checkpoints, replay, and host-effect authorization; the system's
+product surfaces must consume those boundaries rather than create a parallel
+authority model. ICP is an optional deployment adapter alongside local/server
+and other hosts.
 
 ## Product naming and documentation
 

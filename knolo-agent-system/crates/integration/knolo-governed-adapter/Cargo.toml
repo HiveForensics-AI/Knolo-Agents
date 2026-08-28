@@ -1,0 +1,15 @@
+[package]
+name = "knolo-governed-adapter"
+version = "0.1.0"
+edition = "2021"
+license = "Apache-2.0"
+description = "Product-to-Knolo Agent tool-call adapter"
+
+[dependencies]
+knolo-agent = { path = "../../../../crates/knolo-agent" }
+knolo-agent-core = { path = "../../../../crates/knolo-agent-core" }
+serde = { workspace = true }
+serde_json = { workspace = true }
+
+[dev-dependencies]
+serde_json = { workspace = true }

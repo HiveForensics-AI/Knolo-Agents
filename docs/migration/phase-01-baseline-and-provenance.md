@@ -3,7 +3,7 @@
 ## Objective
 
 Establish a reliable inventory of the current Knolo system and the
-`knolo-product` harness, then define what “make it our own” means in product,
+`knolo-agent-system` harness, then define what “make it our own” means in product,
 technical, and legal terms. This phase prevents accidental package duplication,
 license loss, or a coding-only architecture being renamed as a general agent
 platform.
@@ -33,7 +33,7 @@ new behavior.
 
 ### 3. Provenance and licensing register
 
-Record `knolo-product/SOURCE_REV`, the Grok license, `THIRD-PARTY-NOTICES`,
+Record `knolo-agent-system/SOURCE_REV`, the Grok license, `THIRD-PARTY-NOTICES`,
 vendored source notices, and all source files selected for extraction. For each
 candidate component, record whether it is:
 
@@ -68,9 +68,11 @@ The profile is declarative. It does not grant capabilities or contain secrets.
 
 ## Package impact
 
-No package is removed or renamed. Phase 1 may add documentation and contract
-fixtures only. `knolo-product` remains an isolated source/reference tree and
-is not added to the root Cargo workspace.
+The root runtime packages are not removed or renamed. The imported product
+workspace itself is intentionally renamed from `knolo-product` to
+`knolo-agent-system`; it remains outside the root Cargo workspace and
+integrates through explicit runtime contracts and adapters. Phase 1 may add
+documentation and contract fixtures only.
 
 ## Exit criteria
 
@@ -90,4 +92,3 @@ is not added to the root Cargo workspace.
 - **Risk:** “AI employee” becomes a prompt label with no operational model.
   **Mitigation:** require authority, memory, lifecycle, approvals, and audit in
   the profile contract.
-

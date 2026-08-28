@@ -1,10 +1,18 @@
-# ADR-001: ICP Agent Runtime Canister
+# ADR-001: ICP Deployment Adapter for the Agent Runtime
 
-- **Status:** Accepted (Phase 0 / Phase 1 / Phase 2 / Phase 3; Phase 4 DX ongoing)
+- **Status:** Accepted as an optional deployment adapter; supersedes the earlier
+  ICP-as-primary-product framing
 - **Date:** 2026-08-03
-- **Context:** Host Knolo’s deterministic control plane on the Internet Computer.
+- **Context:** Make the Knolo agent control plane deployable on the Internet
+  Computer without making ICP, stable memory, or Candid part of the product
+  contract.
 
 ## Decision
+
+0. **Product position:** `knolo-agent-system` is the full product composition
+   layer. `knolo-agent-icp` is one optional deployment adapter alongside local,
+   server, browser/WASM, and other host integrations. Product workflows must
+   remain usable without ICP.
 
 1. **Topology (Phase 1–3):** Single long-lived **multi-tenant agent runtime canister**
    embedding `knolo-agent-core` + `knolo-agent::runtime::Scheduler` and an ICP Host.
@@ -19,9 +27,10 @@
    `await_llm` / `await_tool` / `await_retrieve` suspend reasons; the canister
    resolves them asynchronously then resumes.
 
-4. **Knowledge coupling:** Loose **Candid** coupling to knolo-core knowledge
-   canisters (`search`). Without `host.knowledge_canister`, retrieval uses a
-   deterministic mock. Do not vendor knolo-core storage.
+4. **Knowledge coupling:** Loose **Candid** coupling to compatible `knolo-core`
+   knowledge services (`search`) is an adapter concern. Without
+   `host.knowledge_canister`, retrieval uses a deterministic mock. Do not
+   vendor core storage, Knowledge Images, verification, or receipts.
 
 5. **Async model:** Keep the synchronous `NodeExecutor` contract. Map long
    effects to **Suspend → checkpoint → timer/message resume**.
@@ -43,9 +52,10 @@
    escalation). Destination must match the loaded graph. `forward_handoff`
    performs inter-canister accept on a peer runtime.
 
-9. **Separation from `knolo-agent-wasm`:** Browser JSON protocol adapter remains
-   a separate crate and path. The ICP canister is a full Host runtime, not the
-   inspect-only WASM ABI.
+9. **Separation from product and WASM:** Browser JSON and ICP integrations remain
+   separate adapters. The ICP canister may provide a full host runtime for
+   supported deployments, but it is not the product definition and does not
+   replace the local/server path or the browser JSON ABI.
 
 10. **DX (Phase 4):** Agents-owned scripts under `scripts/icp/`, dfx example +
     scaffold template, TypeScript `IcpAgentRuntimeClient` in `@knolo/agents`
@@ -66,7 +76,8 @@
 ## Non-goals
 
 - Mainnet SaaS billing product.
-- Making ICP the default `@knolo/agents` engine.
+- Making ICP the default `@knolo/agents` engine or a release blocker for the
+  full agent system.
 - Rewriting core as pure `no_std`.
 - Automatic migration from Phase 1–2 `stable_save` blob format.
 - AgentForge registry integration (optional later).

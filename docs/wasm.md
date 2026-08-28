@@ -11,5 +11,5 @@ unless the embedding host explicitly supplies it.
 `knolo-agent-icp` is a different `wasm32-unknown-unknown` target: an Internet
 Computer **host runtime** (Candid + `ic-cdk`), not the browser JSON protocol.
 Build with `cargo build -p knolo-agent-icp --target wasm32-unknown-unknown --release`.
-See [ADR-001](architecture/adr-001-icp-agent-runtime.md) and
+See [ADR-001](architecture/adr-001-icp-deployment-adapter.md) and
 [examples/icp-agent-canister](../examples/icp-agent-canister/).

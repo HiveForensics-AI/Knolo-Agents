@@ -53,5 +53,5 @@ cargo test -p xai-grok-shell
 ```
 
 The supported product checks run from the parent workspace as documented in the
-parent README. See the root `knolo-product/README.md` and `PROVENANCE.md` for
+parent README. See the root `knolo-agent-system/README.md` and `PROVENANCE.md` for
 the implementation boundary and legal requirements.

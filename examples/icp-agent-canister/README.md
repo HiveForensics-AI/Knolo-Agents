@@ -126,7 +126,7 @@ Fixtures:
 
 ## Docs
 
-- [`docs/architecture/adr-001-icp-agent-runtime.md`](../../docs/architecture/adr-001-icp-agent-runtime.md)
+- [`docs/architecture/adr-001-icp-deployment-adapter.md`](../../docs/architecture/adr-001-icp-deployment-adapter.md)
 - [`docs/architecture/icp-constraints-matrix.md`](../../docs/architecture/icp-constraints-matrix.md)
 - [`docs/architecture/icp-cost-guide.md`](../../docs/architecture/icp-cost-guide.md)
 - [`docs/architecture/icp-security-checklist.md`](../../docs/architecture/icp-security-checklist.md)

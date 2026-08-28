@@ -32,6 +32,19 @@ generated/
 # Promote decisions to docs/architecture/ ADRs when ready to commit.
 .plans/
 
+# Private development documentation and generated documentation sites.
+# Published architecture, migration, security, and user guides remain tracked.
+**/docs/internal/
+**/docs/development/
+**/docs/dev/
+**/docs/_build/
+site/
+_site/
+
+# Local Knolo runtime state when a checkout is used as a workspace
+.knolo/
+**/.knolo/
+
 # Local configuration and secrets
 .env
 .env.*
