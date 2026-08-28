@@ -60,7 +60,7 @@ impl LocalMemoryStore {
                 scored.push((score, record, scope.max_bytes));
             }
         }
-        scored.sort_by(|left, right| right.0.cmp(&left.0));
+        scored.sort_by_key(|item| std::cmp::Reverse(item.0));
         let mut total_bytes = 0_u32;
         Ok(scored
             .into_iter()

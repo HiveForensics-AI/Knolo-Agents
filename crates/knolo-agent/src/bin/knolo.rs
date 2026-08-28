@@ -30,12 +30,12 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         None | Some("help") | Some("--help") | Some("-h") => print_help(),
         Some("--version") | Some("version") => println!("knolo 0.2.0"),
         Some("init") => init()?,
-        Some("doctor") => doctor(&args[1..].to_vec())?,
-        Some("memory") => memory_command(&args[1..].to_vec())?,
-        Some("agent") => agent_command(&mut args[1..].to_vec())?,
-        Some("model") => model_command(&args[1..].to_vec())?,
-        Some("run") => run_command(&mut args[1..].to_vec())?,
-        Some("session") => session_command(&mut args[1..].to_vec())?,
+        Some("doctor") => doctor(&args[1..])?,
+        Some("memory") => memory_command(&args[1..])?,
+        Some("agent") => agent_command(&args[1..])?,
+        Some("model") => model_command(&args[1..])?,
+        Some("run") => run_command(&args[1..])?,
+        Some("session") => session_command(&args[1..])?,
         Some(other) => return Err(format!("unknown command `{other}`; use `knolo help`").into()),
     }
     Ok(())
@@ -101,9 +101,9 @@ fn doctor(args: &[String]) -> Result<(), Box<dyn std::error::Error>> {
         }
     }
 
-    fs::create_dir_all(&agents_dir())?;
-    fs::create_dir_all(&models_dir())?;
-    fs::create_dir_all(&sessions_dir())?;
+    fs::create_dir_all(agents_dir())?;
+    fs::create_dir_all(models_dir())?;
+    fs::create_dir_all(sessions_dir())?;
     println!("ok   Knolo data directory: {}", data_dir().display());
 
     let selected_model = match model_id {
@@ -194,7 +194,7 @@ fn memory_command(args: &[String]) -> Result<(), Box<dyn std::error::Error>> {
     Ok(())
 }
 
-fn agent_command(args: &mut Vec<String>) -> Result<(), Box<dyn std::error::Error>> {
+fn agent_command(args: &[String]) -> Result<(), Box<dyn std::error::Error>> {
     match args.first().map(String::as_str) {
         Some("list") => {
             println!(
@@ -211,22 +211,22 @@ fn agent_command(args: &mut Vec<String>) -> Result<(), Box<dyn std::error::Error
                 }
             }
         }
-        Some("create") => create_agent(&args[1..].to_vec())?,
-        Some("set-model") => set_agent_model(&args[1..].to_vec())?,
-        Some("run") => run_command(&mut args[1..].to_vec())?,
+        Some("create") => create_agent(&args[1..])?,
+        Some("set-model") => set_agent_model(&args[1..])?,
+        Some("run") => run_command(&args[1..])?,
         Some("resume") => {
             let id = args
                 .get(1)
                 .ok_or("usage: knolo agent resume <session-id>")?;
-            session_command(&mut vec!["resume".into(), id.clone()])?
+            session_command(&["resume".into(), id.clone()])?
         }
         Some("logs") => {
             let id = args.get(1).ok_or("usage: knolo agent logs <session-id>")?;
-            session_command(&mut vec!["logs".into(), id.clone()])?
+            session_command(&["logs".into(), id.clone()])?
         }
         Some("stop") => {
             let id = args.get(1).ok_or("usage: knolo agent stop <session-id>")?;
-            session_command(&mut vec!["stop".into(), id.clone()])?
+            session_command(&["stop".into(), id.clone()])?
         }
         Some("inspect") => {
             let id = args.get(1).ok_or("usage: knolo agent inspect <id>")?;
@@ -362,7 +362,7 @@ fn model_command(args: &[String]) -> Result<(), Box<dyn std::error::Error>> {
             fs::remove_file(model_path(id)?)?;
             println!("Removed model {id}");
         }
-        Some("add") => add_model(&args[1..].to_vec())?,
+        Some("add") => add_model(&args[1..])?,
         _ => return Err("usage: knolo model add|list|inspect|remove".into()),
     }
     Ok(())
@@ -432,7 +432,7 @@ fn add_model(args: &[String]) -> Result<(), Box<dyn std::error::Error>> {
     Ok(())
 }
 
-fn run_command(args: &mut Vec<String>) -> Result<(), Box<dyn std::error::Error>> {
+fn run_command(args: &[String]) -> Result<(), Box<dyn std::error::Error>> {
     let mut agent = "coding".to_owned();
     let mut headless = false;
     let mut approve_writes = false;
@@ -603,7 +603,7 @@ fn new_session_id() -> String {
         .unwrap_or_else(|_| "session-unknown".into())
 }
 
-fn session_command(args: &mut Vec<String>) -> Result<(), Box<dyn std::error::Error>> {
+fn session_command(args: &[String]) -> Result<(), Box<dyn std::error::Error>> {
     match args.first().map(String::as_str) {
         Some("list") => {
             if !sessions_dir().exists() {
@@ -666,7 +666,7 @@ fn session_command(args: &mut Vec<String>) -> Result<(), Box<dyn std::error::Err
             let record: SessionRecord =
                 serde_json::from_reader(File::open(sessions_dir().join(format!("{id}.json")))?)?;
             let _ = fs::remove_file(sessions_dir().join(format!("{id}.pause")));
-            run_command(&mut vec![
+            run_command(&[
                 "--agent".into(),
                 record.agent,
                 "--session-id".into(),
