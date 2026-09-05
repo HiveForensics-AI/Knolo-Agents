@@ -11,11 +11,11 @@ members = [
 edition = "2021"
 license = "Apache-2.0"
 rust-version = "1.78"
-version = "0.2.0"
+version = "0.2.1"
 
 [workspace.dependencies]
-knolo-agent-core = { path = "crates/knolo-agent-core", version = "0.2.0" }
-knolo-agent = { path = "crates/knolo-agent", version = "0.2.0" }
+knolo-agent-core = { path = "crates/knolo-agent-core", version = "0.2.1" }
+knolo-agent = { path = "crates/knolo-agent", version = "0.2.1" }
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
 sha2 = "0.10"

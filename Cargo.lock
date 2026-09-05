@@ -385,7 +385,7 @@ checksum = "8f42a60cbdf9a97f5d2305f08a87dc4e09308d1276d28c869c684d7777685682"
 
 [[package]]
 name = "knolo-agent"
-version = "0.2.0"
+version = "0.2.1"
 dependencies = [
  "knolo-agent-core",
  "serde",
@@ -394,7 +394,7 @@ dependencies = [
 
 [[package]]
 name = "knolo-agent-core"
-version = "0.2.0"
+version = "0.2.1"
 dependencies = [
  "serde",
  "serde_json",
@@ -403,7 +403,7 @@ dependencies = [
 
 [[package]]
 name = "knolo-agent-icp"
-version = "0.2.0"
+version = "0.2.1"
 dependencies = [
  "candid",
  "ic-cdk",
@@ -420,7 +420,7 @@ dependencies = [
 
 [[package]]
 name = "knolo-agent-wasm"
-version = "0.2.0"
+version = "0.2.1"
 dependencies = [
  "knolo-agent-core",
  "serde",

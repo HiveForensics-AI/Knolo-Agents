@@ -6,8 +6,8 @@ license.workspace = true
 rust-version.workspace = true
 description = "Deterministic, policy-enforced runtime for Knolo agents."
 
-repository = "https://github.com/knolo-ai/knolo-agents"
-homepage = "https://github.com/knolo-ai/knolo-agents"
+repository = "https://github.com/HiveForensics-AI/Knolo-Agents"
+homepage = "https://github.com/HiveForensics-AI/Knolo-Agents"
 readme = "../../README.md"
 keywords = ["knolo", "agents", "ai"]
 categories = ["development-tools"]
