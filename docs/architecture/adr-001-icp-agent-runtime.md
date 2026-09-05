@@ -2,11 +2,6 @@
 
 - **Status:** Accepted (Phase 0 / Phase 1 / Phase 2 / Phase 3; Phase 4 DX ongoing)
 - **Date:** 2026-08-03
-- **Harness boundary:** ICP is a **platform adapter / host**, not part of the
-  universal harness core. `createHarness` / `HarnessSession` must not import
-  this crate or Candid DTOs. TypeScript consumers wrap the canister with
-  `icpAgent()` over `IcpAgentRuntimeClient`. See
-  [the universal harness contract](../universal-harness-contract.md).
 - **Context:** Host Knolo’s deterministic control plane on the Internet Computer.
 
 ## Decision

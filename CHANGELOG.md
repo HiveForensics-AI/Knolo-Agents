@@ -16,8 +16,8 @@ called out explicitly and may evolve without a crates.io release.
 
 - Product overlay: `@knolo/agents` becomes an additive universal harness around
   the preserved L3 graph runtime. Package names are unchanged.
-- Contract: [`docs/universal-harness-contract.md`](docs/universal-harness-contract.md)
-  (assurance levels L0–L3, lifecycle, authority intersection, freeze point).
+- Contract: assurance levels L0–L3, lifecycle, authority intersection, and
+  freeze point.
 - **ICP is an adapter, not harness core.** `IcpAgentRuntimeClient` stays as the
   low-level client; the harness reaches a canister only through `icpAgent()`.
   `Agent.load` engines remain `"typescript" | "wasm"`.
