@@ -1,0 +1,65 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://knolo.dev/schemas/skill-selection-receipt-v1.schema.json",
+  "title": "SkillSelectionReceiptV1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["version", "query", "lexical", "resolution", "registry", "selected", "rejected", "candidates", "authority", "acquisition"],
+  "properties": {
+    "version": { "const": 1 },
+    "query": { "type": "string" },
+    "lexical": { "const": true },
+    "resolution": { "enum": ["none", "local", "auto"] },
+    "registry": { "enum": ["disabled", "discover", "acquire-approved", "acquire-any-verified"] },
+    "selected": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["id", "skillVersion", "packId", "score", "required", "contentHash"],
+        "properties": {
+          "id": { "type": "string" },
+          "skillVersion": { "type": "string" },
+          "packId": { "type": "string" },
+          "score": { "type": "number" },
+          "required": { "type": "boolean" },
+          "contentHash": { "type": "string" }
+        }
+      }
+    },
+    "rejected": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["id", "reason"],
+        "properties": {
+          "id": { "type": "string" },
+          "reason": { "enum": ["authority", "missing", "hash", "policy"] }
+        }
+      }
+    },
+    "candidates": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["id", "score"],
+        "properties": {
+          "id": { "type": "string" },
+          "score": { "type": "number" }
+        }
+      }
+    },
+    "authority": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["capabilities", "tools"],
+      "properties": {
+        "capabilities": { "type": "array", "items": { "type": "string" } },
+        "tools": { "type": "array", "items": { "type": "string" } }
+      }
+    },
+    "acquisition": { "$ref": "skill-acquisition-receipt-v1.schema.json" }
+  }
+}

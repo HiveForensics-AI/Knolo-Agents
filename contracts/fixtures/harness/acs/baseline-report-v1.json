@@ -1,0 +1,12 @@
+{
+  "version": 1,
+  "kind": "acs-baseline-report",
+  "agent": "dummy-callable",
+  "suites": [
+    { "id": "knowledge-qa-v1", "composite": 50 },
+    { "id": "tool-workflow-v1", "composite": 40 },
+    { "id": "failure-recovery-v1", "composite": 55 }
+  ],
+  "meanComposite": 48.33,
+  "notes": "Recorded dummy-agent baseline before harness context/skills/recovery. Later harness runs compare against these composites on the same fixtures."
+}

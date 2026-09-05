@@ -1,0 +1,17 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://knolo.dev/schemas/harness-dependency-root-v1.schema.json",
+  "title": "HarnessDependencyRootV1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["version", "algorithm", "dependencies", "root"],
+  "properties": {
+    "version": { "const": 1 },
+    "algorithm": { "const": "knolo.harness.dependencies.v1" },
+    "dependencies": {
+      "type": "array",
+      "items": { "$ref": "pack-dependency-v1.schema.json" }
+    },
+    "root": { "type": "string", "pattern": "^knolo\\.harness\\.dependencies\\.v1:[0-9a-f]{64}$" }
+  }
+}

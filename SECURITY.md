@@ -5,3 +5,6 @@ issues for suspected vulnerabilities. Email **security@knolo.example** with impa
 reproduction, affected versions, and any suggested mitigation. Maintainers will
 acknowledge within three business days, coordinate a fix and advisory, and credit
 reporters who consent. Never include credentials or private user data.
+
+The product security model and harness checklist live in
+[`docs/security.md`](docs/security.md).

@@ -12,6 +12,97 @@ called out explicitly and may evolve without a crates.io release.
 
 ### Added
 
+#### Universal harness conversion (start)
+
+- Product overlay: `@knolo/agents` becomes an additive universal harness around
+  the preserved L3 graph runtime. Package names are unchanged.
+- Contract: [`docs/universal-harness-contract.md`](docs/universal-harness-contract.md)
+  (assurance levels L0–L3, lifecycle, authority intersection, freeze point).
+- **ICP is an adapter, not harness core.** `IcpAgentRuntimeClient` stays as the
+  low-level client; the harness reaches a canister only through `icpAgent()`.
+  `Agent.load` engines remain `"typescript" | "wasm"`.
+- Core peer: `@knolo/core` **`^5.1.0`** (optional). V5 adapters under
+  `packages/agents/src/core-v5/` wrap Knowledge Images, Cortex, ClaimGraph,
+  durable runs, authority, evidence, and diagnostics. Legacy
+  `CortexCapability` / `ClaimGraphCapability` remain.
+- ACS baseline runner and three dummy-agent fixture suites under
+  `contracts/fixtures/harness/acs/`.
+- Compatibility freeze of do-not-delete public APIs:
+  [`docs/compatibility.md`](docs/compatibility.md).
+- `createHarness` / `HarnessSession` with `TaskV1`, deterministic middleware
+  hooks, and `HarnessRunReceiptV1` (no Hub, no ICP types in harness core).
+- First-party `AgentAdapter` factories in `@knolo/agents`: `callableAgent`,
+  `httpAgent` (host `fetch`), `processAgent` (explicit argv, no shell),
+  `toolAwareAgent`, `nativeKnoloAgent`, and `icpAgent()` over
+  `IcpAgentRuntimeClient`.
+- Deterministic `compileContext` / `ContextSelectionReceiptV1`: lexical-first
+  evidence, Cortex memory recall, redundancy filter, budget priority
+  (evidence > constraints > skills > memories). Required evidence never
+  drops silently. Optional semantic rerank is recorded as a non-deterministic
+  external effect.
+- Local skills (no Hub): `SkillDefinitionV1`, `CapabilityIndex` over existing
+  `.knolo` JSON metadata, deterministic `resolveSkills`, and
+  `SkillSelectionReceiptV1`. Skills whose required capabilities are not in
+  effective authority are denied. Trust defaults to `registry: disabled`.
+- Optional Hub registry: `PackRegistryCapabilityV1` with `memoryPackRegistry`
+  (tests) and `httpPackRegistry` (host `fetch`). Manifest GET + direct Blob
+  download + SHA-256. Yanked versions fail closed (HTTP 410). Tokens never
+  go to Blob. Reads existing `knolo.lock.json`; mixed registries fail
+  closed without force. Offline mode is pinned cache only.
+- `HarnessDependencyRootV1` / `PackDependencyV1`: canonical CBOR digest of the
+  frozen pack set, bound to the run receipt. Newly pulled packs stage for the
+  next run only; the active set cannot change mid-run.
+- Auto skill acquisition (`0.6` slice): `acquireSkills` fills unsatisfied
+  `task.requiredCapabilities` from Hub under `SkillTrustPolicyV1`
+  (`disabled` | `discover` | `acquire-approved` | `acquire-any-verified`).
+  Hits are ranked deterministically, SHA-256 verified, and **staged** for the
+  next run. Acquisition never grants authority. Publish stays `propose-only`.
+- Local experience (`0.7` slice): `ExperienceRecordV1` → `LessonCandidateV1`
+  → `SkillCandidateV1`. Cortex-compatible append-only recall, promotion
+  gates (repeated usefulness, evaluation, provenance, approval). Promoted
+  skills are local only. Public Hub publish stays **disabled**.
+- Evaluation and recovery (`0.8` slice): ordered `EvaluationSuiteV1` checks
+  (contract → artifact → task → optional host semantic judge). Recovery
+  classifier (`tool | retrieval | schema | timeout | policy | model | unknown`)
+  with bounded retry and graceful partial. ACS scores live harness runs and
+  reports baseline vs harnessed composite (launch target ≥ +10% relative
+  uplift on the controlled dummy suites).
+- Vendor examples (`0.8` slice): thin Grok Build / Grok / OpenClaw adapters
+  under `examples/adapters/` consume the same Task / Context / Skill / Registry
+  contracts. Generic MCP bridge (`knoloMcpBridge`) in `@knolo/agents` exposes
+  `knolo.retrieve`, `knolo.resolve_skills`, and `knolo.evaluate`. Vendor SDKs
+  stay out of the published package. Live smoke is `KNOLO_VENDOR_SMOKE` plus
+  host keys and is never required for the default unit suite. ICP wrap example
+  is `createHarness({ agent: icpAgent({ actor }) })` only. The Claude example
+  was replaced by a Grok Build session adapter.
+- Capability publishing (`0.9` slice): `buildCapabilityPack` wraps a promoted
+  local skill in a Core V5 Knowledge Image (existing `.knolo` metadata, not a
+  new format). `publishLearnedSkill` requires usefulness, evaluation,
+  provenance, and explicit approval. `propose-only` does not call Hub.
+  `authorized` publishes to `PackRegistryCapabilityV1.publish` (fixture Hub in
+  tests). Secrets fail closed. A second harness can pull, verify, and pass eval.
+- **1.0 freeze (`PR 13`, not a version bump):** freeze classes in
+  [`docs/compatibility.md`](docs/compatibility.md) (frozen L3 / stable-on-path
+  harness / experimental examples). Migration guide and harness security
+  checklist. `knolo-agent-core` parses shared TaskV1, PackDependencyV1,
+  HarnessDependencyRootV1 (same canonical CBOR digest as TypeScript), and
+  HarnessRunReceiptV1 JSON. Schema/fixture conformance tests.
+  `formatAcsReport` renders `AcsHarnessReportV1` as markdown. Native L3 is
+  unchanged.
+- TypeScript state-snapshot replay: the portable engine records per-revision
+  `StateSnapshot` values on `ExecutionReport.snapshots`. `replayDeterministic`
+  accepts events or `ReplayTraceV1` (`recordReplayTrace`) and fails closed when
+  state diverges even if event kinds still match. Timestamps are ignored.
+  Fixture: `contracts/fixtures/replay/portable-counter-trace-v1.json`.
+- Portable WASM execute/resume: `knolo-agent-wasm::command` handles `run` /
+  `resume` / `continue` for state, routing, and suspension. Node results stay
+  host-supplied through `dispatch`. TypeScript `WasmEngine` loops definition
+  handlers over that boundary. Tools, retrieval, and durable stores remain
+  host-bound. Fixture:
+  `contracts/fixtures/conformance/portable-graph-v1.json`.
+
+### Added (prior)
+
 #### ICP agent runtime (Phases 0–4)
 
 - New workspace crate **`knolo-agent-icp`** (`publish = false`): Internet Computer

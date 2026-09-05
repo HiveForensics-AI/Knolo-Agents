@@ -1,0 +1,19 @@
+{
+  "version": 1,
+  "kind": "acs-harness-report",
+  "target": 10,
+  "baselineMean": 48.33,
+  "harnessMean": 80,
+  "relativeUplift": 65.53,
+  "meetsTarget": true,
+  "suites": [
+    {
+      "suiteId": "knowledge-qa-v1",
+      "baseline": 50,
+      "harnessed": 85,
+      "uplift": 35,
+      "relativeUplift": 70,
+      "meetsTarget": true
+    }
+  ]
+}

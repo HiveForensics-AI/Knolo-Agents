@@ -1,0 +1,11 @@
+export { CORE_ABSENT_MESSAGE, CORE_V5_PEER, loadCoreV5, requireCoreV5 } from "./load.js";
+export type { CoreV5Module } from "./load.js";
+export { V5KnowledgeAdapter } from "./knowledge.js";
+export type { KnowledgeImageHandleV5 } from "./knowledge.js";
+export { LegacyCortexAdapter, V5CortexAdapter } from "./cortex.js";
+export type { CortexQueryV5 } from "./cortex.js";
+export { LegacyClaimGraphAdapter, V5ClaimGraphAdapter } from "./claimgraph.js";
+export { V5RunAdapter } from "./runs.js";
+export { V5AuthorityAdapter } from "./authority.js";
+export { V5EvidenceAdapter } from "./evidence.js";
+export { V5DiagnosticsAdapter } from "./diagnostics.js";

@@ -1,0 +1,19 @@
+{
+  "version": 1,
+  "id": "knowledge-qa-v1",
+  "task": {
+    "objective": "Identify suspicious ledger transactions and cite supporting evidence.",
+    "successCriteria": ["identify suspicious transactions", "cite supporting evidence"],
+    "requiredEvidence": ["ledger-pack"],
+    "expectedTools": [],
+    "prohibitedActions": ["wire_transfer"],
+    "targetTokens": 200
+  },
+  "baseline": {
+    "output": "Something looks odd in the data.",
+    "toolCalls": [],
+    "status": "succeeded",
+    "tokens": 80,
+    "latencyMs": 12
+  }
+}

@@ -1,0 +1,35 @@
+{
+  "version": 1,
+  "turns": [
+    {
+      "choices": [
+        {
+          "message": {
+            "role": "assistant",
+            "content": null,
+            "tool_calls": [
+              {
+                "id": "call_retrieve_1",
+                "type": "function",
+                "function": {
+                  "name": "knolo.retrieve",
+                  "arguments": "{\"query\":\"suspicious transactions\"}"
+                }
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "choices": [
+        {
+          "message": {
+            "role": "assistant",
+            "content": "identify suspicious transactions and cite supporting evidence; do not perform irreversible actions"
+          }
+        }
+      ]
+    }
+  ]
+}

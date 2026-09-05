@@ -33,6 +33,7 @@ test("deterministic replay re-executes the control plane and detects divergence"
   const first = await agent.run({ count: 0 }, { executionId: "replay-fixture" });
   const replayed = await agent.replayDeterministic({ count: 0 }, first.events);
   assert.deepEqual(replayed.status, first.status);
+  assert.ok(first.snapshots.length >= 2);
   await assert.rejects(() => agent.replayDeterministic({ count: 0 }, first.events.slice(0, -1)), /replay diverged/);
 });
 
@@ -49,6 +50,67 @@ test("engine limitations and cancellation are explicit", async () => {
   const controller = new AbortController(); controller.abort();
   const report = await Agent.load({ definition: definition(), engine: "typescript" }).run({ count: 0 }, { signal: controller.signal });
   assert.equal(report.status.type, "cancelled");
+});
+
+function wasmHostAdapter() {
+  return {
+    command(raw) {
+      const req = JSON.parse(raw);
+      if (req.command.type === "run") {
+        return JSON.stringify([
+          { type: "event", event: { version: 1, sequence: 1, execution_id: req.command.execution_id, node_id: null, timestamp_ms: req.now_ms, kind: { type: "execution_started" } } },
+          { type: "event", event: { version: 1, sequence: 2, execution_id: req.command.execution_id, node_id: "increment", timestamp_ms: req.now_ms, kind: { type: "node_started", attempt: 1 } } },
+          { type: "dispatch", request: { node_id: "increment", state: req.command.state, attempt: 1 }, session: { n: 1, execution_id: req.command.execution_id, state: req.command.state } },
+        ]);
+      }
+      if (req.command.type === "continue" && req.command.session.n === 1) {
+        const state = { ...req.command.session.state, ...req.command.execution.outcome.patch };
+        return JSON.stringify([
+          { type: "event", event: { version: 1, sequence: 3, execution_id: req.command.session.execution_id, node_id: "increment", timestamp_ms: req.now_ms, kind: { type: "state_patched", revision: 1 } } },
+          { type: "event", event: { version: 1, sequence: 4, execution_id: req.command.session.execution_id, node_id: "increment", timestamp_ms: req.now_ms, kind: { type: "checkpointed" } } },
+          { type: "event", event: { version: 1, sequence: 5, execution_id: req.command.session.execution_id, node_id: "done", timestamp_ms: req.now_ms, kind: { type: "node_started", attempt: 1 } } },
+          { type: "dispatch", request: { node_id: "done", state, attempt: 1 }, session: { n: 2, execution_id: req.command.session.execution_id, state } },
+        ]);
+      }
+      if (req.command.type === "continue" && req.command.session.n === 2) {
+        const events = [
+          { version: 1, sequence: 1, execution_id: req.command.session.execution_id, node_id: null, timestamp_ms: 0, kind: { type: "execution_started" } },
+          { version: 1, sequence: 2, execution_id: req.command.session.execution_id, node_id: "increment", timestamp_ms: 0, kind: { type: "node_started", attempt: 1 } },
+          { version: 1, sequence: 3, execution_id: req.command.session.execution_id, node_id: "increment", timestamp_ms: 0, kind: { type: "state_patched", revision: 1 } },
+          { version: 1, sequence: 4, execution_id: req.command.session.execution_id, node_id: "increment", timestamp_ms: 0, kind: { type: "checkpointed" } },
+          { version: 1, sequence: 5, execution_id: req.command.session.execution_id, node_id: "done", timestamp_ms: 0, kind: { type: "node_started", attempt: 1 } },
+          { version: 1, sequence: 6, execution_id: req.command.session.execution_id, node_id: "done", timestamp_ms: req.now_ms, kind: { type: "terminated" } },
+        ];
+        return JSON.stringify([
+          { type: "event", event: events[5] },
+          { type: "report", report: {
+            status: { type: "terminated", result: req.command.execution.outcome.result },
+            state: { schema_id: "counter-state", revision: 1, value: req.command.session.state, provenance: null },
+            events,
+            steps: 2,
+            tokens: 1,
+            cost_micros: 0,
+            snapshots: [
+              { schema_id: "counter-state", revision: 0, value: { count: 0 }, provenance: null },
+              { schema_id: "counter-state", revision: 1, value: req.command.session.state, provenance: null },
+            ],
+          } },
+        ]);
+      }
+      throw new Error(`unexpected wasm command ${req.command.type}`);
+    },
+  };
+}
+
+test("wasm engine dispatches host handlers over the continue boundary", async () => {
+  const agent = Agent.load({ definition: definition(), engine: "wasm", wasm: wasmHostAdapter() });
+  const inspection = agent.inspect();
+  assert.deepEqual(inspection.capabilities, ["state", "routing", "suspension"]);
+  assert.match(inspection.limitations[0], /continue boundary/);
+  const report = await agent.run({ count: 0 }, { executionId: "wasm-fixture" });
+  assert.deepEqual(report.status, { type: "terminated", result: 1 });
+  assert.equal(report.state.value.count, 1);
+  assert.deepEqual(report.events.map(event => event.kind.type), ["execution_started", "node_started", "state_patched", "checkpointed", "node_started", "terminated"]);
 });
 
 test("ICP client helpers produce loadable definition JSON and wrap actors", async () => {

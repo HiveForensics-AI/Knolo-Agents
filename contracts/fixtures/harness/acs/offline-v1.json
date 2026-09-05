@@ -1,0 +1,18 @@
+{
+  "version": 1,
+  "id": "offline-v1",
+  "task": {
+    "objective": "Answer from pinned cache while offline.",
+    "successCriteria": ["pinned cache"],
+    "requiredEvidence": [],
+    "expectedTools": [],
+    "prohibitedActions": [],
+    "targetTokens": 200
+  },
+  "baseline": {
+    "output": "network error",
+    "toolCalls": [],
+    "status": "failed",
+    "tokens": 10
+  }
+}

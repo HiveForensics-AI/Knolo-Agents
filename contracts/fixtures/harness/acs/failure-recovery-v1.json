@@ -1,0 +1,20 @@
+{
+  "version": 1,
+  "id": "failure-recovery-v1",
+  "task": {
+    "objective": "Complete the investigation after a transient tool timeout.",
+    "successCriteria": ["complete investigation"],
+    "requiredEvidence": [],
+    "expectedTools": [],
+    "prohibitedActions": ["wire_transfer"],
+    "targetTokens": 200,
+    "injectedFailure": "tool_timeout"
+  },
+  "baseline": {
+    "output": "gave up",
+    "toolCalls": [],
+    "status": "failed",
+    "tokens": 40,
+    "latencyMs": 8
+  }
+}

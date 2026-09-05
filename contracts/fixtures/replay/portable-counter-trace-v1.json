@@ -1,0 +1,20 @@
+{
+  "version": 1,
+  "events": [
+    { "version": 1, "sequence": 1, "execution_id": "replay-fixture", "node_id": null, "timestamp_ms": 0, "kind": { "type": "execution_started" } },
+    { "version": 1, "sequence": 2, "execution_id": "replay-fixture", "node_id": "increment", "timestamp_ms": 0, "kind": { "type": "node_started", "attempt": 1 } },
+    { "version": 1, "sequence": 3, "execution_id": "replay-fixture", "node_id": "increment", "timestamp_ms": 0, "kind": { "type": "state_patched", "revision": 1 } },
+    { "version": 1, "sequence": 4, "execution_id": "replay-fixture", "node_id": "increment", "timestamp_ms": 0, "kind": { "type": "checkpointed" } },
+    { "version": 1, "sequence": 5, "execution_id": "replay-fixture", "node_id": "done", "timestamp_ms": 0, "kind": { "type": "node_started", "attempt": 1 } },
+    { "version": 1, "sequence": 6, "execution_id": "replay-fixture", "node_id": "done", "timestamp_ms": 0, "kind": { "type": "terminated" } }
+  ],
+  "snapshots": [
+    { "schema_id": "counter-state", "revision": 0, "value": { "count": 0 }, "provenance": null },
+    {
+      "schema_id": "counter-state",
+      "revision": 1,
+      "value": { "count": 1 },
+      "provenance": { "execution_id": "replay-fixture", "node_id": "increment", "event_sequence": 3 }
+    }
+  ]
+}

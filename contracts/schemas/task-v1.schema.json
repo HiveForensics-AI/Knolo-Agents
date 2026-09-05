@@ -1,0 +1,41 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://knolo.dev/schemas/task-v1.schema.json",
+  "title": "TaskV1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["objective", "successCriteria"],
+  "properties": {
+    "id": { "type": "string", "minLength": 1, "maxLength": 128 },
+    "objective": { "type": "string", "minLength": 1 },
+    "inputs": true,
+    "constraints": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["id", "description"],
+        "properties": {
+          "id": { "type": "string" },
+          "description": { "type": "string" }
+        }
+      }
+    },
+    "successCriteria": { "type": "array", "items": { "type": "string", "minLength": 1 }, "minItems": 1 },
+    "requiredCapabilities": { "type": "array", "items": { "type": "string" } },
+    "preferredSkills": { "type": "array", "items": { "type": "string" } },
+    "prohibitedActions": { "type": "array", "items": { "type": "string" } },
+    "budget": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "maxSteps": { "type": "integer", "minimum": 1 },
+        "maxTokens": { "type": "integer", "minimum": 1 },
+        "maxCostMicros": { "type": "integer", "minimum": 1 },
+        "timeoutMs": { "type": "integer", "minimum": 1 }
+      }
+    },
+    "deadlineMs": { "type": "integer", "minimum": 1 },
+    "outputSchema": true,
+    "evidenceRequirements": { "type": "array", "items": { "type": "string" } }
+  }
+}

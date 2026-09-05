@@ -26,6 +26,13 @@ without moving policy enforcement or retrieval/storage into agents.
 The native `max_steps` and `max_cost_micros` fields are validated but remain
 runtime-owned limits until the core runtime exposes them through this contract.
 
+Harness skills are metadata on the same `.knolo` artifact, not a second binary
+format. `CapabilityIndex` / `capabilityMetadataFromPack` read an optional
+`skills` array from pack JSON. A skill can request capabilities; it cannot
+grant them. Opt-in Hub acquisition (`acquireSkills`) may stage a verified
+skill pack for the **next** run; it cannot change the frozen set or expand
+authority mid-run.
+
 Run the complete proof with `cargo run -p knolo-agent --example pack_e2e`. The
 example loads the packaged native fixture, proves an allowed and denied tool
 call, and then proves deterministic replay.

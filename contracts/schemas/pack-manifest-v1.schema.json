@@ -1,0 +1,19 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://knolo.dev/schemas/pack-manifest-v1.schema.json",
+  "title": "PackManifestV1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["name", "version", "sha256", "url", "sizeBytes", "yanked"],
+  "properties": {
+    "name": { "type": "string", "minLength": 1 },
+    "version": { "type": "string", "minLength": 1 },
+    "sha256": { "type": "string", "pattern": "^[0-9a-f]{64}$" },
+    "stateRoot": { "type": "string" },
+    "url": { "type": "string" },
+    "license": { "type": "string" },
+    "sizeBytes": { "type": "integer", "minimum": 0 },
+    "yanked": { "type": "boolean" },
+    "format": { "enum": ["V4", "V5"] }
+  }
+}

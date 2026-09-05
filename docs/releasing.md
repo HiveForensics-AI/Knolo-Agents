@@ -8,3 +8,20 @@ changelog/release notes, locks, and fixtures; run all CI and publication dry-run
 Tags are `knolo-agent-vX.Y.Z`, `knolo-agent-core-vX.Y.Z`, and `agents-vX.Y.Z`.
 The WASM adapter currently ships from the workspace and is validated, not separately
 published by the release workflow.
+
+## 1.0 freeze (not a version bump)
+
+The universal harness conversion documents freeze classes in
+[compatibility.md](compatibility.md). That is a **removal policy**, not a
+published `1.0.0`. Before tagging 1.0:
+
+- Compatibility matrix matches shipped exports (`packages/agents/tests/api-freeze.test.mjs`).
+- Harness fixtures validate against `contracts/schemas/` and parse in both
+  TypeScript and `knolo-agent-core`.
+- [Migration](migration.md) and the [harness security checklist](security.md)
+  describe tested behavior.
+- P0 items in `FUTURE.md` (pack-owned run budgets) are closed or explicitly
+  deferred in the tag notes. TypeScript state-snapshot replay and portable
+  WASM execute/resume are in-tree.
+
+Workspace versions remain `0.1.x` until that coordinated publish.

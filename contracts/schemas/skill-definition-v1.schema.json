@@ -1,0 +1,51 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://knolo.dev/schemas/skill-definition-v1.schema.json",
+  "title": "SkillDefinitionV1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "version",
+    "id",
+    "skillVersion",
+    "triggers",
+    "domains",
+    "instructions",
+    "requiredCapabilities",
+    "requiredTools",
+    "knowledgeRefs",
+    "provenance"
+  ],
+  "properties": {
+    "version": { "const": 1 },
+    "id": { "type": "string", "minLength": 1, "maxLength": 128 },
+    "skillVersion": { "type": "string", "minLength": 1 },
+    "name": { "type": "string" },
+    "triggers": { "type": "array", "items": { "type": "string" } },
+    "domains": { "type": "array", "items": { "type": "string" } },
+    "schemas": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "input": true,
+        "output": true
+      }
+    },
+    "instructions": { "type": "string", "minLength": 1 },
+    "requiredCapabilities": { "type": "array", "items": { "type": "string" } },
+    "requiredTools": { "type": "array", "items": { "type": "string" } },
+    "knowledgeRefs": { "type": "array", "items": { "type": "string" } },
+    "provenance": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["source", "packId"],
+      "properties": {
+        "source": { "const": "local-pack" },
+        "packId": { "type": "string" },
+        "digest": { "type": "string" },
+        "publisher": { "type": "string" }
+      }
+    },
+    "contentHash": { "type": "string" }
+  }
+}

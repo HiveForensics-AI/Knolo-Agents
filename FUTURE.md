@@ -23,10 +23,12 @@ What is solid today:
 - **Boundaries are explicit.** Tools, retrieval, Cortex, ClaimGraph, clocks, and
   storage are host-injected. `@knolo/core` is a peer dependency, never vendored.
 
-What is deliberately incomplete: full state-level TypeScript replay, standalone
-WASM execution, deeper native pack identity for agent graphs, shared ownership of
-run budgets across pack/core contracts, production multi-agent and live-core
-examples, evaluation harnesses, and pre-1.0 API freeze work.
+What is deliberately incomplete: deeper native pack identity for agent graphs,
+shared ownership of run budgets across pack/core contracts, and production
+multi-agent / live-core examples. The universal harness conversion (PR 0–13),
+TypeScript state-snapshot replay, and portable WASM execute/resume are in-tree;
+freeze classes are documented, but a published 1.0.0 still waits on the remaining
+P0 item below.
 
 ## Priority roadmap
 
@@ -34,24 +36,14 @@ examples, evaluation harnesses, and pre-1.0 API freeze work.
 
 #### Stronger TypeScript deterministic replay (full state snapshots)
 
-- **What:** Today `Agent.replay` validates contiguous event sequences, and
-  `replayDeterministic` re-executes and compares the control-plane event trace
-  (excluding wall-clock timestamps). That is ordering/kind fidelity, not full
-  run reconstruction. Extend portable replay so each step can be checked against
-  recorded state snapshots (revision, schema id, value, provenance), not only
-  event kinds and sequence numbers.
-- **Why it matters:** Consumers building on `@knolo/agents` need to audit and
-  re-verify local runs without the Rust runtime. Control-plane ordering alone
-  cannot catch silent state divergence or incomplete patch application.
-- **Rough acceptance criteria:**
-  - Replay fixtures record ordered events **and** per-step (or per-revision)
-    state snapshots.
-  - `replayDeterministic` (or a successor API) fails closed when state diverges
-    even if event kinds still match.
-  - Tests cover happy path, truncated history, mutated state mid-trace, and
-    timestamp-insensitive comparison.
-  - Scope stays within the portable engine capabilities (no fake tool/network
-    effects inside TypeScript-only replay).
+- **Status:** Landed. The portable engine records per-revision snapshots on
+  `ExecutionReport.snapshots`. `replayDeterministic` accepts events or
+  `ReplayTraceV1` and fails closed when snapshot values diverge even if event
+  kinds match. Fixture:
+  `contracts/fixtures/replay/portable-counter-trace-v1.json`.
+- **What remains:** Optional richer traces as L2/L3 adapters emit host-effect
+  events. Portable WASM reports now include snapshots; host-effect paths still
+  do not.
 
 #### Expose run budgets through shared pack / core contracts
 
@@ -77,25 +69,15 @@ examples, evaluation harnesses, and pre-1.0 API freeze work.
 
 #### Full standalone WASM execution path
 
-- **What:** `knolo-agent-wasm` is a versioned JSON protocol adapter. It accepts
-  shared graphs and supports **inspect**; run/resume responses currently fail
-  with “execution requires host node dispatch.” TypeScript `engine: "wasm"`
-  requires an explicit adapter and never falls back—but the published story is
-  still inspection + host-dispatched handlers, not a self-contained portable
-  runtime.
-- **Why it matters:** Local-first and embeddable hosts need a complete portable
-  path that validates graphs, advances state/routing/suspension, and emits the
-  same event model without shipping the full native host.
-- **Rough acceptance criteria:**
-  - WASM protocol handles `run` / `resume` for the portable capability set
-    (state, routing, suspension) with host-supplied node results only where the
-    contract already requires host effects.
-  - Conformance fixtures shared with `knolo-agent-core` pass under
-    `wasm32-unknown-unknown` and through the TypeScript WASM adapter.
-  - Limitations remain explicit in inspection output; tools/retrieval/durable
-    effects stay host-bound.
-  - Decide whether `knolo-agent-wasm` remains workspace-validated or becomes a
-    separately versioned published artifact (see packaging below).
+- **Status:** Landed for the portable capability set. `knolo-agent-wasm::command`
+  accepts `run` / `resume` / `continue`. The adapter advances state, routing,
+  suspension, limits, and snapshots, and returns `dispatch` whenever a node
+  result is required. TypeScript `WasmEngine` loops host handlers over that
+  boundary; engines still never fall back. Fixture:
+  `contracts/fixtures/conformance/portable-graph-v1.json`.
+- **What remains:** Optional richer traces as L2/L3 adapters emit host-effect
+  events. Tools, retrieval, clocks, and durable stores stay host-bound.
+  Publishing `knolo-agent-wasm` as its own crate is still a packaging decision.
 
 ### P1 — Important before broader adoption
 
@@ -167,7 +149,7 @@ examples, evaluation harnesses, and pre-1.0 API freeze work.
   demo, consumers must invent integration themselves.
 - **Rough acceptance criteria:**
   - Optional demo or docs path that depends on a published `@knolo/core`
-    version range (currently documented as `^3.5.0` for TypeScript).
+    version range (currently documented as `^5.1.0` for TypeScript).
   - No vendoring of core source, credentials, or storage into this repository.
   - Demo fails closed when core is absent (explicit error, not partial silent
     stubs).
@@ -175,8 +157,15 @@ examples, evaluation harnesses, and pre-1.0 API freeze work.
 
 #### Evaluation / scoring harness aligned with the control plane
 
-- **What:** No first-party eval harness exists. Any scoring should consume
-  ordered events, artifact hashes, and recorded state—not opaque chat logs.
+- **Status:** ACS baseline runner, live harness scoring (`scoreHarnessRun`),
+  `EvaluationSuiteV1` (contract / artifact / task + optional judge), recovery
+  classifier, raw-vs-harness `compareSuites`, and `formatAcsReport` markdown
+  from comparison receipts. Controlled dummy suites live in
+  `contracts/fixtures/harness/acs/`. Freeze classes, migration, and the
+  harness security checklist landed with PR 13.
+- **What remains:** Richer event-sequence artifact checks as L2/L3 adapters
+  emit them. Vendor smoke is env-flagged (`KNOLO_VENDOR_SMOKE`) and lives in
+  `examples/adapters/`; the default unit suite stays network-free.
 - **Why it matters:** Governed agents need inspectable evaluation: did the run
   stay within pack authority, hit step budgets, produce expected terminal
   results, and remain replayable?
@@ -203,21 +192,14 @@ examples, evaluation harnesses, and pre-1.0 API freeze work.
 
 #### Packaging, docs, and API stability toward 1.0
 
-- **What:** Artifacts version independently (`knolo-agent`, `knolo-agent-core`,
-  `@knolo/agents`). WASM is workspace-validated, not separately published by
-  the release workflow. Public APIs are allowed to evolve before 1.0. Docs
-  still describe early-release limitations that must stay accurate as gaps
-  close.
-- **Why it matters:** Downstream integrators need a clear compatibility matrix,
-  dry-run publish discipline, and a known freeze bar.
-- **Rough direction:**
-  - Keep release checklist and compatibility matrix current
-    (`docs/releasing.md`, `docs/compatibility.md`).
-  - Explicitly list which surfaces are experimental vs stable-on-path-to-1.0.
-  - Resolve whether WASM is a published crate/package or remains an embedder
-    adapter only.
-  - Sync documented versions with published tags; avoid drift between workspace
-    crate versions and user-facing “early 0.x” messaging.
+- **Status:** Freeze classes (frozen / stable-on-path-to-1.0 / experimental),
+  migration guide, harness security checklist, and Rust/TS harness JSON parity
+  landed (PR 13). Workspace versions remain `0.1.x`. WASM is still
+  workspace-validated, not separately published by the release workflow.
+- **What remains:** A published `1.0.0` after P0 items close; keep
+  `docs/releasing.md` and `docs/compatibility.md` current; decide whether WASM
+  is a published artifact or an embedder adapter only; sync documented
+  versions with tags.
 
 #### Optional conveniences (only if they preserve the model)
 
@@ -227,11 +209,12 @@ examples, evaluation harnesses, and pre-1.0 API freeze work.
 - Conformance suite expansion as portable contracts grow (without bloating the
   TypeScript engine into a second full runtime).
 
-#### ICP agent runtime canister (platform target)
+#### ICP agent runtime canister (platform adapter / host)
 
 - **What:** Host `knolo-agent-core` + scheduler inside an ICP canister so the
   canister is the Host: packs, checkpoints, events, tools, ic-llm / outcalls,
-  and optional calls to knolo-core knowledge canisters.
+  and optional calls to knolo-core knowledge canisters. The universal harness
+  does **not** import this crate. TypeScript reaches it through `icpAgent()`.
 - **Status (Phase 0–4 landed):** Workspace crate `knolo-agent-icp`, ADR-001,
   constraints matrix, deterministic Candid control plane, pack-gated tools,
   ic-llm suspend/resume, knowledge retrieval principal, timers for
@@ -283,14 +266,16 @@ Knolo Agents is deliberately **not** trying to become:
 1. **Shared budget contracts** before treating pack-level `max_steps` /
    `max_cost_micros` as authoritative policy (today they are validated and
    dropped on the native path).
-2. **TypeScript state-snapshot replay** before marketing TS as fully
-   audit-equivalent for portable graphs.
-3. **WASM execute/resume** after portable contracts and conformance fixtures are
-   the single source of truth (avoid a second graph semantics).
+2. **TypeScript state-snapshot replay** is in-tree for the portable engine.
+   Do not market TS as audit-equivalent for host-effect / WASM runs until those
+   paths emit the same snapshots.
+3. **WASM execute/resume** is in-tree for state/routing/suspension. Do not treat
+   it as a second full runtime: host effects stay host-bound.
 4. **Production examples** after pack/budget contracts stabilize enough that
    examples will not thrash.
-5. **1.0 freeze** only after P0 items and compatibility docs match shipped
-   behavior.
+5. **1.0 version bump** only after P0 items and compatibility docs match
+   shipped behavior. Freeze *classes* are already documented; they are not a
+   1.0.0 tag.
 
 ### Already in good shape (do not re-list as missing)
 
@@ -306,6 +291,14 @@ These are present and should be extended carefully rather than rewritten:
 - Authority-narrowing handoff envelopes.
 - Explicit TypeScript/WASM engine selection with no silent fallback.
 - Least-authority example packs and the `pack_e2e` allowed/denied/replay path.
+- Universal harness (`createHarness`, adapters, context, skills, registry,
+  dependency freeze, acquisition, experience, evaluation, recovery, publish)
+  with schema/fixture conformance and Rust parse parity for Task / root /
+  receipt JSON.
+- TypeScript portable replay with per-revision state snapshots
+  (`recordReplayTrace` / `replayDeterministic`).
+- Portable WASM `run` / `resume` / `continue` for state, routing, and
+  suspension (`knolo-agent-wasm::command` + TypeScript `WasmEngine` dispatch).
 
 When closing a gap, update this file, the README “Current status and
 limitations” section, and the relevant `docs/` page in the same change.

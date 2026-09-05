@@ -1,0 +1,18 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://knolo.dev/schemas/evaluation-suite-v1.schema.json",
+  "title": "EvaluationSuiteV1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["version", "id"],
+  "properties": {
+    "version": { "const": 1 },
+    "id": { "type": "string" },
+    "expectedTools": { "type": "array", "items": { "type": "string" } },
+    "requiredEvidence": { "type": "array", "items": { "type": "string" } },
+    "targetTokens": { "type": "integer", "minimum": 1 },
+    "injectedFailure": { "type": "string" },
+    "baseline": { "type": "object" },
+    "judgeRequired": { "type": "boolean" }
+  }
+}

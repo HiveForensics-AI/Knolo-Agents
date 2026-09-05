@@ -1,24 +1,34 @@
 # Knolo Agents
 
-Knolo Agents is a **Rust runtime** and **TypeScript SDK** for building reliable,
-inspectable AI agents. An agent run is a deterministic, reviewable control
-plane: typed graphs describe execution, packs grant authority, hosts provide
-effects, and ordered events make replay and auditing possible.
+Knolo Agents is a **universal intelligence and trust harness** with a preserved
+**Rust runtime** and **TypeScript SDK**. The in-process graph runtime remains
+the highest-assurance (L3) mode: typed graphs describe execution, packs grant
+authority, hosts provide effects, and ordered events make replay and auditing
+possible.
+
+The conversion adds a compatibility shell around arbitrary agents. A developer
+does not have to rebuild an existing agent as a Knolo graph in order to receive
+Knolo knowledge, skills, memory, policy, recovery, and evaluation. Wrap a
+callable function, HTTP endpoint, process, tool-aware SDK, native `Agent`, or
+ICP canister behind `AgentAdapter`.
 
 This repository is intentionally small and independently usable. Runtime
-behavior lives in Rust; TypeScript exposes ergonomic builders and a limited
-portable engine. Provider SDKs, storage backends, and `@knolo/core`
-implementations stay outside this workspace.
+behavior lives in Rust; TypeScript exposes ergonomic builders, a limited
+portable engine, and the harness. Provider SDKs, storage backends, and
+`@knolo/core` implementations stay outside this workspace. **ICP is an
+adapter**, not harness core.
 
 | Artifact | Role | Published |
 | --- | --- | --- |
 | `knolo-agent-core` | Portable contracts and validation | crates.io (workspace version) |
 | `knolo-agent` | Native scheduler, policy, packs, host effects | crates.io (workspace version) |
 | `knolo-agent-wasm` | Browser/JSON WASM protocol adapter | workspace-only |
-| `knolo-agent-icp` | Internet Computer canister host | workspace-only |
-| `@knolo/agents` | TypeScript builders, engines, ICP client | npm (`0.1.x`) |
+| `knolo-agent-icp` | Internet Computer canister **host** (consumed via `icpAgent()` adapter) | workspace-only |
+| `@knolo/agents` | TypeScript builders, engines, harness, adapters (including ICP client) | npm (`0.1.x` → `0.2` conversion) |
 
-Current workspace version line: **0.1.x** (early release; APIs may evolve before 1.0).
+Current workspace version line: **0.1.x** moving to **0.2** for the universal
+harness conversion (APIs may evolve before 1.0). Existing `Agent.load` apps
+need no mandatory rewrite.
 
 ---
 
@@ -67,7 +77,11 @@ code:
 This fits governed workflows, durable automation, replayable control planes, and
 applications that must inspect or constrain agent authority. It is **not** a
 replacement for a model provider, vector store, job queue, or application data
-layer.
+layer. It is also **not** a rewrite of third-party agents: the harness wraps
+them.
+
+The conversion contract, assurance levels, and ICP-as-adapter boundary:
+[docs/universal-harness-contract.md](docs/universal-harness-contract.md).
 
 ---
 
@@ -79,9 +93,10 @@ layer.
 └────────────────────────────┬─────────────────────────────────────┘
                              │ injects effects & capabilities
 ┌────────────────────────────▼─────────────────────────────────────┐
-│  @knolo/agents  │  knolo-agent  │  knolo-agent-icp  │  wasm     │
-│  builders +     │  native       │  ICP canister      │  JSON     │
-│  TS/WASM engine │  scheduler    │  host runtime     │  adapter  │
+│  @knolo/agents UNIVERSAL HARNESS (no ICP types in this layer)    │
+│  task → context → skills → tools → recovery → eval               │
+│                         AgentAdapter                             │
+│  builders + TS/WASM engine  │  nativeKnoloAgent  │  icpAgent()   │
 └────────────────────────────┬─────────────────────────────────────┘
                              │ shared contracts
 ┌────────────────────────────▼─────────────────────────────────────┐
@@ -89,20 +104,45 @@ layer.
 │  graphs · state · events · packs · policy · HITL · handoffs      │
 │  checkpoints · replay · tools · retrieval · redaction            │
 └──────────────────────────────────────────────────────────────────┘
+
+In-process L3: knolo-agent scheduler + TS/WASM engines
+Platform host (not harness core): knolo-agent-icp canister, reached via icpAgent()
 ```
 
 | Layer | Responsibility |
 | --- | --- |
 | `knolo-agent-core` | Portable contracts, graph/state validation, policy types, events, replay, checkpoints, pack declarations, handoffs, HITL. |
 | `knolo-agent` | Native Rust scheduler, host effect boundaries, policy enforcement, pack loading, Cortex/ClaimGraph injection, durable runtime integrations. |
-| `knolo-agent-wasm` | Small versioned JSON/WASM protocol adapter for embedding portable contracts. Not a full host. |
-| `knolo-agent-icp` | ICP canister host for the control plane (Phases 0–4: deterministic runtime, host effects, stable structures, handoff, DX). |
-| `@knolo/agents` | Typed TypeScript builders, deterministic state/routing/suspension engine, explicit WASM integration, ICP client. |
-| `@knolo/core` | Separate peer dependency owned by the consumer; can provide Cortex and ClaimGraph implementations. **Never vendored here.** |
+| `knolo-agent-wasm` | Versioned JSON/WASM protocol adapter: inspect plus portable `run` / `resume` / `continue`. Host supplies node results. Not a full host. |
+| `knolo-agent-icp` | ICP canister **host** (Phases 0–4). Not a harness subsystem. TypeScript reaches it through `icpAgent()`. |
+| `@knolo/agents` | Typed TypeScript builders, deterministic state/routing/suspension engine, explicit WASM integration, harness, adapters (callable / HTTP / process / native / ICP client / MCP bridge). |
+| `@knolo/core` | Separate optional peer (`^5.1.0`) owned by the consumer; Knowledge Images, Cortex, ClaimGraph, authority, durable runs. **Never vendored here.** |
 
 The repository does not vendor `@knolo/core`, credentials, retrieval storage, or
-provider SDKs. See [docs/architecture/README.md](docs/architecture/README.md) and
+provider SDKs. See [docs/universal-harness-contract.md](docs/universal-harness-contract.md),
+[docs/architecture/README.md](docs/architecture/README.md), and
 [docs/core-boundary.md](docs/core-boundary.md).
+
+### Universal harness
+
+Any compatible agent sits behind `AgentAdapter`. Knolo owns context compilation,
+skills, Hub-pinned packs, policy, recovery, and evaluation.
+
+| Level | Surface | First targets |
+| --- | --- | --- |
+| L0 | input → output | `callableAgent()`, simple CLI / HTTP |
+| L1 | tools / MCP | Grok Build / Grok function calling |
+| L2 | hooks / checkpoints | OpenClaw plugins, step-aware SDKs |
+| L3 | in-process Knolo graph | `nativeKnoloAgent(Agent.load(...))` |
+
+ICP is **not** a fourth harness level. Wrap a canister the same way you wrap
+any other remote agent:
+
+```ts
+await createHarness({ agent: icpAgent({ actor }), knowledge: ["./company.knolo"] });
+```
+
+`Agent.load` engines remain `"typescript" | "wasm"` only.
 
 ### Trust boundaries
 
@@ -356,8 +396,9 @@ Replay never silently upgrades contracts or bypasses current policy.
 
 TypeScript `Agent.replay` validates event contiguity; `replayDeterministic`
 re-runs the portable graph and compares the control-plane trace (excluding
-wall-clock timestamps). Full per-step state snapshot replay is on the roadmap
-([FUTURE.md](FUTURE.md)).
+wall-clock timestamps). When given a `ReplayTraceV1` (`recordReplayTrace`), it
+also compares per-revision state snapshots and fails closed if values diverge
+even when event kinds still match.
 
 See [docs/replay.md](docs/replay.md).
 
@@ -385,7 +426,7 @@ provide:
 
 This repository only defines **narrow injection interfaces**. It does not
 contain core source, storage, credentials, or release process. Consumers install
-a compatible `@knolo/core` (`^3.5.0` peer on the TypeScript package) themselves.
+a compatible `@knolo/core` (`^5.1.0` optional peer on the TypeScript package) themselves.
 
 See [docs/core-boundary.md](docs/core-boundary.md).
 
@@ -475,7 +516,14 @@ console.log(report.status); // { type: "terminated", result: 1 }
 | `multi-agent` | `AuthorityV1`, `HandoffEnvelopeV1`, `assertNarrowAuthority` |
 | `hitl` | Suspension / resume validation helpers |
 | `replay` | Artifact hashes and replay request validation |
-| `icp` | `IcpAgentRuntimeClient` + candid-aligned DTOs |
+| `icp` | `IcpAgentRuntimeClient` + candid-aligned DTOs (low-level client; wrap with `icpAgent()` for the harness) |
+| `harness` | `createHarness`, `HarnessSession`, `TaskV1`, run receipts |
+| `adapters` | `callableAgent`, `httpAgent`, `processAgent`, `toolAwareAgent`, `nativeKnoloAgent`, `icpAgent` |
+| `context` | `compileContext`, selection receipts, evidence/memory sources |
+| `skills` | `resolveSkills`, `SkillDefinitionV1`, local `SkillSelectionReceiptV1` |
+| `capabilities` | `CapabilityIndex`, pack metadata, `intersectAuthority` |
+| `registry` | `memoryPackRegistry`, `httpPackRegistry`, Hub search/resolve/pull |
+| `dependencies` | `parseLockfile`, `HarnessDependencyRootV1`, `DependencyActivation` |
 
 ### Engine selection
 
@@ -487,10 +535,12 @@ Agent.load({ definition, engine: "typescript" });
 Agent.load({ definition, engine: "wasm", wasm: myAdapter });
 ```
 
-Tool calls, retrieval, and durable effects remain host-bound or Rust/WASM/ICP
-integrations.
+Tool calls, retrieval, and durable effects remain host-bound or Rust/WASM
+integrations. ICP is a separate adapter path, not an `Agent.load` engine.
 
-### ICP client (TypeScript)
+### ICP client (TypeScript) — adapter, not harness core
+
+The low-level canister client is unchanged. The harness does not import it.
 
 ```ts
 import { IcpAgentRuntimeClient, portableCounterDefinition } from "@knolo/agents";
@@ -504,6 +554,12 @@ const report = await client.startExecution("run-1", {
   value: { count: 0 },
   provenance: null,
 });
+```
+
+Harness wrap (same `AgentAdapter` slot as `callableAgent`):
+
+```ts
+// createHarness({ agent: icpAgent({ actor: client }) })
 ```
 
 Package README: [packages/agents/README.md](packages/agents/README.md).
@@ -540,7 +596,9 @@ Authoritative native runtime:
 
 ### `knolo-agent-wasm`
 
-WASM-safe JSON protocol adapter. Build:
+WASM-safe JSON protocol adapter. `inspect` is self-contained. `run` / `resume`
+advance portable state, routing, and suspension and return `dispatch` until the
+host answers with `continue`. Build:
 
 ```bash
 cargo check -p knolo-agent-wasm --target wasm32-unknown-unknown
@@ -549,7 +607,8 @@ cargo check -p knolo-agent-wasm --target wasm32-unknown-unknown
 ### `knolo-agent-icp`
 
 ICP canister embedding `Scheduler` + ICP host effects (not the browser WASM
-adapter). Workspace-only (`publish = false`). Build:
+adapter, and **not** harness core). Workspace-only (`publish = false`).
+TypeScript consumes it through `icpAgent()`. Build:
 
 ```bash
 cargo build -p knolo-agent-icp --target wasm32-unknown-unknown --release
@@ -561,7 +620,9 @@ bash scripts/icp/build.sh
 
 ## WASM and ICP
 
-These are **two different** `wasm32-unknown-unknown` products:
+These are **two different** `wasm32-unknown-unknown` products. WASM is the
+in-process portable engine adapter. ICP is a **platform host** reached from
+the harness only through `icpAgent()`.
 
 | Path | Crate | Role |
 | --- | --- | --- |
@@ -640,6 +701,7 @@ cd examples/icp-agent-canister && bash scripts/run-handoff.sh
 | [crates/knolo-agent/examples/pack_e2e.rs](crates/knolo-agent/examples/pack_e2e.rs) | Pack → policy → allowed/denied tool → replay |
 | [crates/knolo-agent/examples/complete.rs](crates/knolo-agent/examples/complete.rs) | Cortex, ClaimGraph, handoff, replay request shapes |
 | [examples/typescript/complete.ts](examples/typescript/complete.ts) | Full TS walkthrough: graph, tools, retrieval, HITL, WASM inspect |
+| [examples/adapters/](examples/adapters/) | Grok Build / Grok / OpenClaw / ICP wrap around the same harness contracts |
 | [examples/packs/](examples/packs/) | Scenario packs (minimal grants per scenario) |
 | [examples/icp-agent-canister/](examples/icp-agent-canister/) | dfx deploy, deterministic run, handoff smoke |
 | [contracts/](contracts/) | JSON schemas and deterministic fixtures |
@@ -665,6 +727,7 @@ More context: [examples/README.md](examples/README.md).
 ├── examples/
 │   ├── packs/                # .knolo authority declarations
 │   ├── typescript/           # TS end-to-end sample
+│   ├── adapters/             # Grok Build / Grok / OpenClaw / ICP harness wraps
 │   └── icp-agent-canister/   # dfx project + fixtures + scripts
 ├── docs/                     # Architecture and subsystem docs
 ├── scripts/
@@ -734,7 +797,7 @@ Report vulnerabilities per [SECURITY.md](SECURITY.md). Broader notes:
 - Version 1 readers reject unknown major versions.
 - Resume/replay require **exact** artifact hashes.
 - Rust: **1.78+**
-- TypeScript: **Node 20+**, optional `@knolo/core` **^3.5.0**
+- TypeScript: **Node 20+**, optional `@knolo/core` **^5.1.0**
 - TypeScript and WASM exchange only documented JSON contracts
 
 See [docs/compatibility.md](docs/compatibility.md).
@@ -746,6 +809,10 @@ See [docs/compatibility.md](docs/compatibility.md).
 | Topic | Document |
 | --- | --- |
 | Docs home | [docs/README.md](docs/README.md) |
+| Universal harness contract | [docs/universal-harness-contract.md](docs/universal-harness-contract.md) |
+| Compatibility / freeze classes | [docs/compatibility.md](docs/compatibility.md) |
+| Migration | [docs/migration.md](docs/migration.md) |
+| Security (harness checklist) | [docs/security.md](docs/security.md) |
 | Architecture overview | [docs/architecture/README.md](docs/architecture/README.md) |
 | State transactions | [docs/architecture/state-transactions.md](docs/architecture/state-transactions.md) |
 | Graph validation | [docs/architecture/graph-validation.md](docs/architecture/graph-validation.md) |
@@ -765,23 +832,39 @@ See [docs/compatibility.md](docs/compatibility.md).
 
 ## Status and limitations
 
-The project is an early **0.1.x** release.
+The project is an early **0.1.x** release converting to a **0.2** universal
+harness. Existing L3 graph APIs are frozen (see
+[docs/compatibility.md](docs/compatibility.md)).
 
 **Solid today**
 
-- Rust authoritative runtime with pack-constrained policy
+- Rust authoritative in-process runtime with pack-constrained policy
 - Ordered events, graph hashing, checkpoint artifact binding
 - TypeScript portable engine (state, routing, suspension) with explicit engines
 - Host-injected tools, retrieval, Cortex, ClaimGraph
-- ICP control-plane host Phases 0–4 (workspace-only)
+- Core V5 adapter boundary (`@knolo/core` ^5.1.0 optional peer)
+- ACS baseline runner and recorded dummy-agent scores
+- `createHarness` / `HarnessSession` with `AgentAdapter` factories (`callableAgent`, `httpAgent`, `processAgent`, `toolAwareAgent`, `nativeKnoloAgent`, `icpAgent`, `knoloMcpBridge`)
+- Deterministic context compiler (lexical evidence, budgeted envelope, selection receipts)
+- Local skill resolver (`SkillDefinitionV1`, `CapabilityIndex`, deny-by-default authority)
+- Optional Hub registry (`PackRegistryCapabilityV1`, `knolo.lock.json`, offline cache)
+- Frozen `HarnessDependencyRootV1` (canonical pack set; next-run staging only)
+- Opt-in Hub skill acquisition (`discover` / `acquire-approved` / `acquire-any-verified`); next-run staging; never grants authority
+- Local experience → lesson → skill promotion (`memory: true`); Hub publish disabled
+- Evaluation suite (contract / artifact / task + optional judge) and recovery classifier
+- ACS on live harness runs vs recorded dummy baseline (`compareSuites`, ≥ +10% relative target)
+- Vendor examples: Grok Build / Grok / OpenClaw under `examples/adapters/` (same Task / Context / Skill / Registry contracts; live smoke env-flagged)
+- Capability publishing: `publishLearnedSkill` builds a Core V5 pack from a promoted local skill, publishes to a fixture Hub, and a second harness can pull it
+- 1.0 freeze docs: freeze classes, [migration](docs/migration.md), [harness security checklist](docs/security.md); Rust `knolo-agent-core` parses Task / dependency-root / run-receipt JSON; `formatAcsReport` renders ACS comparison receipts
+- TypeScript state-snapshot replay: `replayDeterministic` compares per-revision snapshots and fails closed on state divergence
+- Portable WASM execute/resume: `run` / `resume` / `continue` for state, routing, and suspension; host supplies node results
+- ICP control-plane **host** Phases 0–4 (workspace-only; harness adapter path)
 
 **Deliberately incomplete / evolving**
 
-- Full state-level TypeScript replay (beyond control-plane trace)
-- Standalone full WASM execution (adapter exists; not a complete host)
+- A published **1.0.0** still waits on remaining P0 items in [FUTURE.md](FUTURE.md) (pack-owned run budgets)
 - Shared pack ownership of run budgets (`max_steps` / `max_cost_micros` on native packs validated but not yet fully policy-compiled)
 - Production multi-agent and live-core examples
-- Evaluation harnesses and pre-1.0 API freeze
 
 Details: [FUTURE.md](FUTURE.md).
 
