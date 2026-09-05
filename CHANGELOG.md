@@ -10,12 +10,20 @@ called out explicitly and may evolve without a crates.io release.
 
 ## [Unreleased]
 
+## [0.2.2] - 2026-09-05
+
+### Fixed
+
+- Crate README documentation links now use repository-root GitHub URLs so
+  crates.io no longer rewrites them under `crates/knolo-agent-core/` or
+  `crates/knolo-agent/`.
+
 ## [0.2.1] - 2026-09-05
 
 ### Fixed
 
-- Crate `repository` / `homepage` URLs now point at the public GitHub
-  repository, so crates.io README documentation links resolve.
+- Crate and npm `repository` / `homepage` URLs now point at the public GitHub
+  repository, so crates.io and npm README documentation links resolve.
 
 ## [0.2.0] - 2026-09-05
 

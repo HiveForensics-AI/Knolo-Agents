@@ -101,8 +101,8 @@ layer.
 | `@knolo/core` | Separate peer dependency owned by the consumer; can provide Cortex and ClaimGraph implementations. **Never vendored here.** |
 
 The repository does not vendor `@knolo/core`, credentials, retrieval storage, or
-provider SDKs. See [docs/architecture/README.md](docs/architecture/README.md) and
-[docs/core-boundary.md](docs/core-boundary.md).
+provider SDKs. See [docs/architecture/README.md](https://github.com/HiveForensics-AI/Knolo-Agents/blob/main/docs/architecture/README.md) and
+[docs/core-boundary.md](https://github.com/HiveForensics-AI/Knolo-Agents/blob/main/docs/core-boundary.md).
 
 ### Trust boundaries
 
@@ -169,7 +169,7 @@ declared on the node. The runtime rejects:
 
 Successful reduction increments the revision once and records provenance
 (execution id, node id, event sequence). See
-[docs/architecture/state-transactions.md](docs/architecture/state-transactions.md).
+[docs/architecture/state-transactions.md](https://github.com/HiveForensics-AI/Knolo-Agents/blob/main/docs/architecture/state-transactions.md).
 
 ### Graph validation
 
@@ -183,7 +183,7 @@ Compilation rejects (among other issues):
 - invalid read/write paths
 - non-positive limits
 
-See [docs/architecture/graph-validation.md](docs/architecture/graph-validation.md).
+See [docs/architecture/graph-validation.md](https://github.com/HiveForensics-AI/Knolo-Agents/blob/main/docs/architecture/graph-validation.md).
 
 ### Execution limits
 
@@ -196,7 +196,7 @@ Graphs carry `ExecutionLimitsV1`:
 
 Native packs may also declare `budget.max_steps` / `budget.max_cost_micros`.
 Those fields are validated today; full shared ownership with pack policy is
-still evolving (see [FUTURE.md](FUTURE.md)). Tool-level resource budgets are
+still evolving (see [FUTURE.md](https://github.com/HiveForensics-AI/Knolo-Agents/blob/main/FUTURE.md)). Tool-level resource budgets are
 enforced separately via the pack budget ledger.
 
 ### What each engine can do
@@ -257,7 +257,7 @@ Scenario packs under `examples/packs/` intentionally grant only what each demo
 needs (`basic`, `tools`, `retrieval`, `checkpoint`, `hitl`, `handoff`,
 `replay`, `claims`, `cortex`, `wasm`, …).
 
-Full write-up: [docs/packs.md](docs/packs.md).
+Full write-up: [docs/packs.md](https://github.com/HiveForensics-AI/Knolo-Agents/blob/main/docs/packs.md).
 
 ---
 
@@ -278,7 +278,7 @@ Usage is charged after execution. Denials are structured (`PolicyDenialV1`) and
 auditable. Resume and live replay require fresh explicit authorization. Host
 credentials are never serialized into events or checkpoints.
 
-See [docs/policy-enforcement.md](docs/policy-enforcement.md).
+See [docs/policy-enforcement.md](https://github.com/HiveForensics-AI/Knolo-Agents/blob/main/docs/policy-enforcement.md).
 
 ### Tools
 
@@ -292,7 +292,7 @@ Tools pair a **serializable definition** with a **host-owned implementation**:
 Implementations remain outside checkpoints. Unit tests should use deterministic
 local fakes and must not access the network.
 
-See [docs/tools.md](docs/tools.md).
+See [docs/tools.md](https://github.com/HiveForensics-AI/Knolo-Agents/blob/main/docs/tools.md).
 
 ### Host injection (Rust)
 
@@ -325,7 +325,7 @@ production hosts should provide equivalent durability.
 Resume verifies **every** artifact hash before accepting typed input. Stale HITL
 tokens or changed authority fail closed.
 
-See [docs/checkpoints.md](docs/checkpoints.md).
+See [docs/checkpoints.md](https://github.com/HiveForensics-AI/Knolo-Agents/blob/main/docs/checkpoints.md).
 
 ### Human-in-the-loop (HITL)
 
@@ -357,9 +357,9 @@ Replay never silently upgrades contracts or bypasses current policy.
 TypeScript `Agent.replay` validates event contiguity; `replayDeterministic`
 re-runs the portable graph and compares the control-plane trace (excluding
 wall-clock timestamps). Full per-step state snapshot replay is on the roadmap
-([FUTURE.md](FUTURE.md)).
+([FUTURE.md](https://github.com/HiveForensics-AI/Knolo-Agents/blob/main/FUTURE.md)).
 
-See [docs/replay.md](docs/replay.md).
+See [docs/replay.md](https://github.com/HiveForensics-AI/Knolo-Agents/blob/main/docs/replay.md).
 
 ---
 
@@ -373,7 +373,7 @@ content hash). Retrieval is a **policy-gated host capability**, not hidden
 prompt augmentation. Persist the result or event reference so replay can use
 recorded evidence without repeating external reads.
 
-See [docs/retrieval.md](docs/retrieval.md).
+See [docs/retrieval.md](https://github.com/HiveForensics-AI/Knolo-Agents/blob/main/docs/retrieval.md).
 
 ### Cortex and ClaimGraph (`@knolo/core` boundary)
 
@@ -387,7 +387,7 @@ This repository only defines **narrow injection interfaces**. It does not
 contain core source, storage, credentials, or release process. Consumers install
 a compatible `@knolo/core` (`^3.5.0` peer on the TypeScript package) themselves.
 
-See [docs/core-boundary.md](docs/core-boundary.md).
+See [docs/core-boundary.md](https://github.com/HiveForensics-AI/Knolo-Agents/blob/main/docs/core-boundary.md).
 
 ---
 
@@ -506,7 +506,7 @@ const report = await client.startExecution("run-1", {
 });
 ```
 
-Package README: [packages/agents/README.md](packages/agents/README.md).
+Package README: [packages/agents/README.md](https://github.com/HiveForensics-AI/Knolo-Agents/blob/main/packages/agents/README.md).
 
 ---
 
@@ -578,16 +578,16 @@ These are **two different** `wasm32-unknown-unknown` products:
 | 3 | `ic-stable-structures` v1, limits/allowlists, multi-agent handoff, ops queries |
 | 4 | DX scripts, TypeScript client, cost & security guides |
 
-Local dfx example: [examples/icp-agent-canister/](examples/icp-agent-canister/).
+Local dfx example: [examples/icp-agent-canister/](https://github.com/HiveForensics-AI/Knolo-Agents/tree/main/examples/icp-agent-canister/).
 
 Architecture docs:
 
-- [ADR-001](docs/architecture/adr-001-icp-agent-runtime.md)
-- [Constraints matrix](docs/architecture/icp-constraints-matrix.md)
-- [Cost guide](docs/architecture/icp-cost-guide.md)
-- [Security checklist](docs/architecture/icp-security-checklist.md)
+- [ADR-001](https://github.com/HiveForensics-AI/Knolo-Agents/blob/main/docs/architecture/adr-001-icp-agent-runtime.md)
+- [Constraints matrix](https://github.com/HiveForensics-AI/Knolo-Agents/blob/main/docs/architecture/icp-constraints-matrix.md)
+- [Cost guide](https://github.com/HiveForensics-AI/Knolo-Agents/blob/main/docs/architecture/icp-cost-guide.md)
+- [Security checklist](https://github.com/HiveForensics-AI/Knolo-Agents/blob/main/docs/architecture/icp-security-checklist.md)
 
-WASM notes: [docs/wasm.md](docs/wasm.md).
+WASM notes: [docs/wasm.md](https://github.com/HiveForensics-AI/Knolo-Agents/blob/main/docs/wasm.md).
 
 ---
 
@@ -637,14 +637,14 @@ cd examples/icp-agent-canister && bash scripts/run-handoff.sh
 
 | Path | Description |
 | --- | --- |
-| [crates/knolo-agent/examples/pack_e2e.rs](crates/knolo-agent/examples/pack_e2e.rs) | Pack → policy → allowed/denied tool → replay |
-| [crates/knolo-agent/examples/complete.rs](crates/knolo-agent/examples/complete.rs) | Cortex, ClaimGraph, handoff, replay request shapes |
-| [examples/typescript/complete.ts](examples/typescript/complete.ts) | Full TS walkthrough: graph, tools, retrieval, HITL, WASM inspect |
-| [examples/packs/](examples/packs/) | Scenario packs (minimal grants per scenario) |
-| [examples/icp-agent-canister/](examples/icp-agent-canister/) | dfx deploy, deterministic run, handoff smoke |
-| [contracts/](contracts/) | JSON schemas and deterministic fixtures |
+| [crates/knolo-agent/examples/pack_e2e.rs](https://github.com/HiveForensics-AI/Knolo-Agents/blob/main/crates/knolo-agent/examples/pack_e2e.rs) | Pack → policy → allowed/denied tool → replay |
+| [crates/knolo-agent/examples/complete.rs](https://github.com/HiveForensics-AI/Knolo-Agents/blob/main/crates/knolo-agent/examples/complete.rs) | Cortex, ClaimGraph, handoff, replay request shapes |
+| [examples/typescript/complete.ts](https://github.com/HiveForensics-AI/Knolo-Agents/blob/main/examples/typescript/complete.ts) | Full TS walkthrough: graph, tools, retrieval, HITL, WASM inspect |
+| [examples/packs/](https://github.com/HiveForensics-AI/Knolo-Agents/tree/main/examples/packs/) | Scenario packs (minimal grants per scenario) |
+| [examples/icp-agent-canister/](https://github.com/HiveForensics-AI/Knolo-Agents/tree/main/examples/icp-agent-canister/) | dfx deploy, deterministic run, handoff smoke |
+| [contracts/](https://github.com/HiveForensics-AI/Knolo-Agents/tree/main/contracts/) | JSON schemas and deterministic fixtures |
 
-More context: [examples/README.md](examples/README.md).
+More context: [examples/README.md](https://github.com/HiveForensics-AI/Knolo-Agents/blob/main/examples/README.md).
 
 ---
 
@@ -684,8 +684,8 @@ More context: [examples/README.md](examples/README.md).
 
 ## Development
 
-Contributor conventions are in [AGENTS.md](AGENTS.md) and
-[CONTRIBUTING.md](CONTRIBUTING.md).
+Contributor conventions are in [AGENTS.md](https://github.com/HiveForensics-AI/Knolo-Agents/blob/main/AGENTS.md) and
+[CONTRIBUTING.md](https://github.com/HiveForensics-AI/Knolo-Agents/blob/main/CONTRIBUTING.md).
 
 ### Commands
 
@@ -713,7 +713,7 @@ bash scripts/hygiene.sh
 - Do not vendor `@knolo/core` or commit secrets, build artifacts, or editor state.
 - Preserve public API compatibility unless the change is intentional and documented.
 
-Releases: [docs/releasing.md](docs/releasing.md).
+Releases: [docs/releasing.md](https://github.com/HiveForensics-AI/Knolo-Agents/blob/main/docs/releasing.md).
 
 ---
 
@@ -725,8 +725,8 @@ Validate all versioned input; deny unknown capabilities; constrain arguments and
 budgets; redact sensitive event fields; bind resumes to artifact hashes; narrow
 handoffs; keep secrets only in host memory.
 
-Report vulnerabilities per [SECURITY.md](SECURITY.md). Broader notes:
-[docs/security.md](docs/security.md).
+Report vulnerabilities per [SECURITY.md](https://github.com/HiveForensics-AI/Knolo-Agents/blob/main/SECURITY.md). Broader notes:
+[docs/security.md](https://github.com/HiveForensics-AI/Knolo-Agents/blob/main/docs/security.md).
 
 ### Compatibility
 
@@ -737,7 +737,7 @@ Report vulnerabilities per [SECURITY.md](SECURITY.md). Broader notes:
 - TypeScript: **Node 20+**, optional `@knolo/core` **^3.5.0**
 - TypeScript and WASM exchange only documented JSON contracts
 
-See [docs/compatibility.md](docs/compatibility.md).
+See [docs/compatibility.md](https://github.com/HiveForensics-AI/Knolo-Agents/blob/main/docs/compatibility.md).
 
 ---
 
@@ -745,21 +745,21 @@ See [docs/compatibility.md](docs/compatibility.md).
 
 | Topic | Document |
 | --- | --- |
-| Docs home | [docs/README.md](docs/README.md) |
-| Architecture overview | [docs/architecture/README.md](docs/architecture/README.md) |
-| State transactions | [docs/architecture/state-transactions.md](docs/architecture/state-transactions.md) |
-| Graph validation | [docs/architecture/graph-validation.md](docs/architecture/graph-validation.md) |
-| Packs | [docs/packs.md](docs/packs.md) |
-| Policy | [docs/policy-enforcement.md](docs/policy-enforcement.md) |
-| Tools | [docs/tools.md](docs/tools.md) |
-| Retrieval | [docs/retrieval.md](docs/retrieval.md) |
-| Checkpoints | [docs/checkpoints.md](docs/checkpoints.md) |
-| Replay | [docs/replay.md](docs/replay.md) |
-| WASM | [docs/wasm.md](docs/wasm.md) |
-| Core boundary | [docs/core-boundary.md](docs/core-boundary.md) |
-| ICP ADR | [docs/architecture/adr-001-icp-agent-runtime.md](docs/architecture/adr-001-icp-agent-runtime.md) |
-| Roadmap | [FUTURE.md](FUTURE.md) |
-| Changelog | [CHANGELOG.md](CHANGELOG.md) |
+| Docs home | [docs/README.md](https://github.com/HiveForensics-AI/Knolo-Agents/blob/main/docs/README.md) |
+| Architecture overview | [docs/architecture/README.md](https://github.com/HiveForensics-AI/Knolo-Agents/blob/main/docs/architecture/README.md) |
+| State transactions | [docs/architecture/state-transactions.md](https://github.com/HiveForensics-AI/Knolo-Agents/blob/main/docs/architecture/state-transactions.md) |
+| Graph validation | [docs/architecture/graph-validation.md](https://github.com/HiveForensics-AI/Knolo-Agents/blob/main/docs/architecture/graph-validation.md) |
+| Packs | [docs/packs.md](https://github.com/HiveForensics-AI/Knolo-Agents/blob/main/docs/packs.md) |
+| Policy | [docs/policy-enforcement.md](https://github.com/HiveForensics-AI/Knolo-Agents/blob/main/docs/policy-enforcement.md) |
+| Tools | [docs/tools.md](https://github.com/HiveForensics-AI/Knolo-Agents/blob/main/docs/tools.md) |
+| Retrieval | [docs/retrieval.md](https://github.com/HiveForensics-AI/Knolo-Agents/blob/main/docs/retrieval.md) |
+| Checkpoints | [docs/checkpoints.md](https://github.com/HiveForensics-AI/Knolo-Agents/blob/main/docs/checkpoints.md) |
+| Replay | [docs/replay.md](https://github.com/HiveForensics-AI/Knolo-Agents/blob/main/docs/replay.md) |
+| WASM | [docs/wasm.md](https://github.com/HiveForensics-AI/Knolo-Agents/blob/main/docs/wasm.md) |
+| Core boundary | [docs/core-boundary.md](https://github.com/HiveForensics-AI/Knolo-Agents/blob/main/docs/core-boundary.md) |
+| ICP ADR | [docs/architecture/adr-001-icp-agent-runtime.md](https://github.com/HiveForensics-AI/Knolo-Agents/blob/main/docs/architecture/adr-001-icp-agent-runtime.md) |
+| Roadmap | [FUTURE.md](https://github.com/HiveForensics-AI/Knolo-Agents/blob/main/FUTURE.md) |
+| Changelog | [CHANGELOG.md](https://github.com/HiveForensics-AI/Knolo-Agents/blob/main/CHANGELOG.md) |
 
 ---
 
@@ -783,10 +783,10 @@ The project is an early **0.1.x** release.
 - Production multi-agent and live-core examples
 - Evaluation harnesses and pre-1.0 API freeze
 
-Details: [FUTURE.md](FUTURE.md).
+Details: [FUTURE.md](https://github.com/HiveForensics-AI/Knolo-Agents/blob/main/FUTURE.md).
 
 ---
 
 ## License
 
-Apache License 2.0. See [LICENSE](LICENSE).
+Apache License 2.0. See [LICENSE](https://github.com/HiveForensics-AI/Knolo-Agents/blob/main/LICENSE).
