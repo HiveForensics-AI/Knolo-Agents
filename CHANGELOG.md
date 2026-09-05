@@ -10,6 +10,8 @@ called out explicitly and may evolve without a crates.io release.
 
 ## [Unreleased]
 
+## [0.2.0] - 2026-09-05
+
 ### Added
 
 #### Universal harness conversion (start)
