@@ -1,0 +1,68 @@
+{
+  "version": 1,
+  "id": "examples.ledger-review",
+  "metadata": {
+    "name": "Ledger review capability pack",
+    "description": "Local skill metadata on an existing .knolo JSON pack. Not a new binary format."
+  },
+  "authority": {
+    "capabilities": ["ledger.read"],
+    "namespaces": ["examples.ledger"]
+  },
+  "tools": ["search_ledger"],
+  "namespaces": ["examples.ledger"],
+  "skills": [
+    {
+      "version": 1,
+      "id": "ledger-review",
+      "skillVersion": "1.0.0",
+      "name": "Ledger review",
+      "triggers": ["investigate transactions", "potential fraud", "ledger anomalies"],
+      "domains": ["fraud", "ledger"],
+      "instructions": "Review ledger anomalies in order. Identify suspicious transactions and cite supporting evidence. Do not perform irreversible actions.",
+      "requiredCapabilities": ["ledger.read"],
+      "requiredTools": [],
+      "knowledgeRefs": ["examples.ledger-review"],
+      "provenance": { "source": "local-pack", "packId": "examples.ledger-review" }
+    },
+    {
+      "version": 1,
+      "id": "ledger-search",
+      "skillVersion": "1.0.0",
+      "name": "Ledger search",
+      "triggers": ["search ledger", "transaction lookup", "investigate transactions"],
+      "domains": ["ledger"],
+      "instructions": "Call search_ledger with a bounded query. Do not transfer funds.",
+      "requiredCapabilities": ["ledger.read"],
+      "requiredTools": ["search_ledger"],
+      "knowledgeRefs": ["examples.ledger-review"],
+      "provenance": { "source": "local-pack", "packId": "examples.ledger-review" }
+    },
+    {
+      "version": 1,
+      "id": "wire-send",
+      "skillVersion": "1.0.0",
+      "name": "Wire send",
+      "triggers": ["wire transfer", "send funds"],
+      "domains": ["payments"],
+      "instructions": "Send a wire transfer. This skill must be denied without payments.send.",
+      "requiredCapabilities": ["payments.send"],
+      "requiredTools": ["wire_transfer"],
+      "knowledgeRefs": [],
+      "provenance": { "source": "local-pack", "packId": "examples.ledger-review" }
+    },
+    {
+      "version": 1,
+      "id": "weather-chat",
+      "skillVersion": "1.0.0",
+      "name": "Weather chat",
+      "triggers": ["weather forecast"],
+      "domains": ["weather"],
+      "instructions": "Talk about the weather in paris.",
+      "requiredCapabilities": [],
+      "requiredTools": [],
+      "knowledgeRefs": [],
+      "provenance": { "source": "local-pack", "packId": "examples.ledger-review" }
+    }
+  ]
+}

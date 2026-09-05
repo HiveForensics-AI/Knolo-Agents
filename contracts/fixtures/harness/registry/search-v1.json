@@ -1,0 +1,15 @@
+{
+  "packs": [
+    {
+      "id": "acme/refund-policy",
+      "publisher": "acme",
+      "slug": "refund-policy",
+      "name": "acme/refund-policy",
+      "description": "Customer support refund policy",
+      "version": "1.2.0",
+      "sha256": "fca3f4f7338eb74ea56da96a1bdbba879384a5eebc8369e340beaa65972a9018",
+      "license": "Apache-2.0",
+      "yanked": false
+    }
+  ]
+}

@@ -1,0 +1,15 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://knolo.dev/schemas/pack-dependency-v1.schema.json",
+  "title": "PackDependencyV1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["name", "version", "sha256", "role"],
+  "properties": {
+    "name": { "type": "string", "minLength": 1 },
+    "version": { "type": "string", "minLength": 1 },
+    "sha256": { "type": "string", "pattern": "^[0-9a-f]{64}$" },
+    "stateRoot": { "type": "string" },
+    "role": { "enum": ["knowledge", "skill", "policy", "evaluation", "workflow"] }
+  }
+}

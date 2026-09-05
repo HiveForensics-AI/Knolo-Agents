@@ -1,0 +1,18 @@
+{
+  "version": 1,
+  "id": "domain-skill-v1",
+  "task": {
+    "objective": "Investigate these transactions for potential fraud.",
+    "successCriteria": ["identify suspicious transactions", "cite supporting evidence"],
+    "requiredEvidence": [],
+    "expectedTools": [],
+    "prohibitedActions": ["wire_transfer"],
+    "targetTokens": 200
+  },
+  "baseline": {
+    "output": "I do not know this domain.",
+    "toolCalls": [],
+    "status": "failed",
+    "tokens": 20
+  }
+}

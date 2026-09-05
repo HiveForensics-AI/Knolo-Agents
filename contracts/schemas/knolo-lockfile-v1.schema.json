@@ -1,0 +1,25 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://knolo.dev/schemas/knolo-lockfile-v1.schema.json",
+  "title": "knolo.lock.json",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["packs"],
+  "properties": {
+    "registry": { "type": "string" },
+    "packs": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["version", "sha256"],
+        "properties": {
+          "version": { "type": "string", "minLength": 1 },
+          "sha256": { "type": "string", "pattern": "^[0-9a-f]{64}$" },
+          "stateRoot": { "type": "string" },
+          "license": { "type": "string" }
+        }
+      }
+    }
+  }
+}

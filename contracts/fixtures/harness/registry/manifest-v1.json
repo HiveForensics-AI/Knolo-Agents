@@ -1,0 +1,9 @@
+{
+  "name": "acme/refund-policy",
+  "version": "1.2.0",
+  "sha256": "fca3f4f7338eb74ea56da96a1bdbba879384a5eebc8369e340beaa65972a9018",
+  "url": "https://blob.example/sha256/fca3f4f7338eb74ea56da96a1bdbba879384a5eebc8369e340beaa65972a9018.knolo",
+  "license": "Apache-2.0",
+  "sizeBytes": 26,
+  "yanked": false
+}

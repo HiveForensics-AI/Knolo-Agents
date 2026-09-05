@@ -1,4 +1,4 @@
-lockfileVersion: '6.0'
+lockfileVersion: '9.0'
 
 settings:
   autoInstallPeers: true
@@ -9,23 +9,26 @@ importers:
   .: {}
 
   packages/agents:
-    dependencies:
-      '@knolo/core':
-        specifier: ^3.5.0
-        version: 3.5.0
     devDependencies:
+      '@knolo/core':
+        specifier: ^5.1.0
+        version: 5.1.0
       typescript:
         specifier: ^5.6.3
         version: 5.9.3
 
 packages:
 
-  /@knolo/core@3.5.0:
-    resolution: {integrity: sha512-y+5B7qjo71VKn3Z3OB5wmwdI6XdiX8MNVWeuSDZQWvFNGbwOeaSe3zV4hGYwyfOGjv5ch0z0epQwZfJQto2jiA==}
-    dev: false
+  '@knolo/core@5.1.0':
+    resolution: {integrity: sha512-C/DXaD3YiL6YHEOcHhQerKoYCCWKI78vq2xnL3yYnJiO20e959XjruNktdhwlM2+yko05kb1qE4T7Rrr6SWWSQ==}
 
-  /typescript@5.9.3:
+  typescript@5.9.3:
     resolution: {integrity: sha512-jl1vZzPDinLr9eUt3J/t7V6FgNEw9QjvBPdysz9KfQDD41fQrC2Y4vKQdiaUpFT4bXlb1RHhLpp8wtm6M5TgSw==}
     engines: {node: '>=14.17'}
     hasBin: true
-    dev: true
+
+snapshots:
+
+  '@knolo/core@5.1.0': {}
+
+  typescript@5.9.3: {}

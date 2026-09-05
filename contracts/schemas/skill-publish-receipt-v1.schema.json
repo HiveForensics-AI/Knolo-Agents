@@ -1,0 +1,22 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://knolo.dev/schemas/skill-publish-receipt-v1.schema.json",
+  "title": "SkillPublishReceiptV1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["version", "decision", "policy", "spec", "skillId", "lessonId", "sha256", "stateRoot", "secrets", "gates", "evaluationPassed", "manifest"],
+  "properties": {
+    "version": { "const": 1 },
+    "decision": { "enum": ["proposed", "published", "denied"] },
+    "policy": { "enum": ["propose-only", "disabled", "authorized"] },
+    "spec": { "type": "string", "minLength": 1 },
+    "skillId": { "type": "string", "minLength": 1 },
+    "lessonId": { "type": ["string", "null"] },
+    "sha256": { "type": "string", "pattern": "^[0-9a-f]{64}$" },
+    "stateRoot": { "type": ["string", "null"] },
+    "secrets": { "const": "clean" },
+    "gates": { "type": ["object", "null"] },
+    "evaluationPassed": { "type": "boolean" },
+    "manifest": { "type": ["object", "null"] }
+  }
+}

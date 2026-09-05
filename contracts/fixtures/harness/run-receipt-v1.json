@@ -1,0 +1,28 @@
+{
+  "version": 1,
+  "runId": "dummy-run",
+  "agentDescriptorHash": "agent:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+  "taskRoot": "task:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+  "inputRoot": "input:cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc",
+  "knowledgeStateRoots": [],
+  "harnessDependencyRoot": "knolo.harness.dependencies.v1:cfa7929fb4638643fa0139cecb485d6f05c24b04a74b2787eeb5ddcebe39d2c9",
+  "authorityRoot": "authority:dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd",
+  "skillSelectionReceipt": null,
+  "evidenceReceipts": ["context:eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee"],
+  "toolReceipts": [],
+  "evaluationReceipt": {
+    "status": "succeeded",
+    "successCriteriaMatched": ["identify suspicious transactions"],
+    "prohibitedViolations": [],
+    "passed": true,
+    "checks": [
+      { "phase": "contract", "id": "task-contract", "passed": true },
+      { "phase": "artifact", "id": "dependency-root", "passed": true },
+      { "phase": "task", "id": "success-criteria", "passed": true }
+    ],
+    "judge": null
+  },
+  "recoveryEvents": [],
+  "finalStatus": "succeeded",
+  "output": "identify suspicious transactions"
+}

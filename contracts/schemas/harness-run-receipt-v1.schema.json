@@ -1,0 +1,49 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://knolo.dev/schemas/harness-run-receipt-v1.schema.json",
+  "title": "HarnessRunReceiptV1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "version",
+    "runId",
+    "agentDescriptorHash",
+    "taskRoot",
+    "inputRoot",
+    "knowledgeStateRoots",
+    "harnessDependencyRoot",
+    "authorityRoot",
+    "skillSelectionReceipt",
+    "evidenceReceipts",
+    "toolReceipts",
+    "evaluationReceipt",
+    "recoveryEvents",
+    "finalStatus",
+    "output"
+  ],
+  "properties": {
+    "version": { "const": 1 },
+    "runId": { "type": "string" },
+    "agentDescriptorHash": { "type": "string" },
+    "taskRoot": { "type": "string" },
+    "inputRoot": { "type": "string" },
+    "knowledgeStateRoots": { "type": "array", "items": { "type": "string" } },
+    "harnessDependencyRoot": { "type": "string" },
+    "authorityRoot": { "type": "string" },
+    "skillSelectionReceipt": { "type": ["string", "null"] },
+    "evidenceReceipts": { "type": "array", "items": { "type": "string" } },
+    "toolReceipts": { "type": "array", "items": { "type": "string" } },
+    "evaluationReceipt": {
+      "type": "object",
+      "required": ["status", "successCriteriaMatched", "prohibitedViolations"],
+      "properties": {
+        "status": { "enum": ["succeeded", "partial", "failed", "suspended"] },
+        "successCriteriaMatched": { "type": "array", "items": { "type": "string" } },
+        "prohibitedViolations": { "type": "array", "items": { "type": "string" } }
+      }
+    },
+    "recoveryEvents": { "type": "array" },
+    "finalStatus": { "enum": ["succeeded", "partial", "failed", "suspended"] },
+    "output": true
+  }
+}

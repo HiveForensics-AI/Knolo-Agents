@@ -1,0 +1,22 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://knolo.dev/schemas/capability-metadata-v1.schema.json",
+  "title": "CapabilityMetadataV1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["version", "packId", "role", "capabilities", "tools", "namespaces", "skills"],
+  "properties": {
+    "version": { "const": 1 },
+    "packId": { "type": "string", "minLength": 1 },
+    "digest": { "type": "string" },
+    "role": { "enum": ["knowledge", "skill", "policy", "evaluation", "workflow"] },
+    "capabilities": { "type": "array", "items": { "type": "string" } },
+    "tools": { "type": "array", "items": { "type": "string" } },
+    "namespaces": { "type": "array", "items": { "type": "string" } },
+    "skills": {
+      "type": "array",
+      "items": { "$ref": "skill-definition-v1.schema.json" }
+    },
+    "license": { "type": "string" }
+  }
+}

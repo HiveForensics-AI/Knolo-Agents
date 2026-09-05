@@ -1,0 +1,47 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://knolo.dev/schemas/skill-acquisition-receipt-v1.schema.json",
+  "title": "SkillAcquisitionReceiptV1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["version", "registry", "publish", "gaps", "missingSkills", "queried", "pulled", "staged", "candidates"],
+  "properties": {
+    "version": { "const": 1 },
+    "registry": { "enum": ["disabled", "discover", "acquire-approved", "acquire-any-verified"] },
+    "publish": { "enum": ["propose-only", "disabled", "authorized"] },
+    "gaps": { "type": "array", "items": { "type": "string" } },
+    "missingSkills": { "type": "array", "items": { "type": "string" } },
+    "queried": { "type": "boolean" },
+    "pulled": { "type": "boolean" },
+    "staged": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["name", "version", "sha256", "role"],
+        "properties": {
+          "name": { "type": "string" },
+          "version": { "type": "string" },
+          "sha256": { "type": "string", "pattern": "^[0-9a-f]{64}$" },
+          "role": { "const": "skill" }
+        }
+      }
+    },
+    "candidates": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["name", "version", "sha256", "score", "decision"],
+        "properties": {
+          "name": { "type": "string" },
+          "version": { "type": "string" },
+          "sha256": { "type": "string" },
+          "score": { "type": "number" },
+          "decision": { "enum": ["staged", "discover", "skipped"] },
+          "reason": { "type": "string" }
+        }
+      }
+    }
+  }
+}

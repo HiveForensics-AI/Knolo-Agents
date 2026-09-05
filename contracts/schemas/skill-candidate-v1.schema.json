@@ -1,0 +1,27 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://knolo.dev/schemas/skill-candidate-v1.schema.json",
+  "title": "SkillCandidateV1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["version", "id", "lessonId", "skill", "gates", "status", "publish"],
+  "properties": {
+    "version": { "const": 1 },
+    "id": { "type": "string" },
+    "lessonId": { "type": "string" },
+    "skill": { "$ref": "skill-definition-v1.schema.json" },
+    "gates": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["usefulness", "evaluation", "provenance", "approval"],
+      "properties": {
+        "usefulness": { "type": "boolean" },
+        "evaluation": { "type": "boolean" },
+        "provenance": { "type": "boolean" },
+        "approval": { "type": "boolean" }
+      }
+    },
+    "status": { "enum": ["candidate", "promoted", "rejected"] },
+    "publish": { "const": "disabled" }
+  }
+}

@@ -1,0 +1,7 @@
+{
+  "objective": "Investigate these transactions for potential fraud.",
+  "successCriteria": ["identify suspicious transactions", "cite supporting evidence"],
+  "minUsefulness": 2,
+  "promote": "auto-approved",
+  "publish": "disabled"
+}

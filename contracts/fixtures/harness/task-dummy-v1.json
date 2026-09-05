@@ -1,0 +1,11 @@
+{
+  "id": "dummy-investigate",
+  "objective": "Investigate these transactions for potential fraud.",
+  "successCriteria": [
+    "identify suspicious transactions",
+    "cite supporting evidence",
+    "do not perform irreversible actions"
+  ],
+  "prohibitedActions": ["wire_transfer"],
+  "budget": { "maxSteps": 8, "timeoutMs": 5000 }
+}

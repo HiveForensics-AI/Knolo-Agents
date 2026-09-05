@@ -39,7 +39,16 @@ export type EventKindV1 =
   | { readonly type: "tool_result"; readonly result: ToolResultV1 };
 export interface ExecutionEventV1 { readonly version: 1; readonly sequence: number; readonly execution_id: string; readonly node_id: string | null; readonly timestamp_ms: number; readonly kind: EventKindV1 }
 export type ExecutionStatus<R = JsonValue> = { readonly type: "suspended"; readonly reason: string } | { readonly type: "terminated"; readonly result: R } | { readonly type: "failed"; readonly error: string } | { readonly type: "cancelled" };
-export interface ExecutionReport<S, R = JsonValue> { readonly status: ExecutionStatus<R>; readonly state: StateSnapshot<S>; readonly events: readonly ExecutionEventV1[]; readonly steps: number; readonly tokens: number; readonly cost_micros: number }
+export interface ExecutionReport<S, R = JsonValue> {
+  readonly status: ExecutionStatus<R>;
+  readonly state: StateSnapshot<S>;
+  readonly events: readonly ExecutionEventV1[];
+  readonly steps: number;
+  readonly tokens: number;
+  readonly cost_micros: number;
+  /** Per-revision snapshots from the portable engine. Absent on hosts that only emit events. */
+  readonly snapshots?: readonly StateSnapshot<S>[];
+}
 export interface Suspension<I = JsonValue> { readonly version: 1; readonly execution_id: string; readonly reason: string; readonly checkpoint: CheckpointV1; readonly input?: I }
 export interface CheckpointV1 { readonly version: 1; readonly execution_id: string; readonly graph_hash: string; readonly pack_hash: string; readonly policy_hash: string; readonly node_implementation_hash: string; readonly contract_hash: string; readonly state: StateSnapshot; readonly pending_node: string; readonly event_cursor: number; readonly steps: number; readonly tokens: number; readonly cost_micros: number }
 export type Failure = { readonly type: "definition"; readonly message: string } | { readonly type: "unsupported"; readonly engine: EngineName; readonly capability: string } | { readonly type: "execution"; readonly message: string } | { readonly type: "cancelled"; readonly message: string };
@@ -48,8 +57,20 @@ export type Capability = "state" | "routing" | "suspension" | "tools" | "retriev
 export type EngineCapability<E extends EngineName> = E extends "typescript" | "wasm" ? "state" | "routing" | "suspension" : never;
 /** Resolves to `never` when a capability list cannot run on the selected engine. */
 export type AssertEngineCapabilities<E extends EngineName, C extends readonly Capability[]> = Exclude<C[number], EngineCapability<E>> extends never ? C : never;
-export type EngineCommand<S = JsonValue, I = JsonValue> = { readonly type: "run"; readonly execution_id: string; readonly state: S } | { readonly type: "resume"; readonly checkpoint: CheckpointV1; readonly input: I } | { readonly type: "replay"; readonly events: readonly ExecutionEventV1[] } | { readonly type: "inspect" };
-export type EngineResponse<S = JsonValue> = { readonly type: "event"; readonly event: ExecutionEventV1 } | { readonly type: "report"; readonly report: ExecutionReport<S> } | { readonly type: "inspection"; readonly inspection: AgentInspection } | { readonly type: "error"; readonly failure: Failure };
+export interface WasmDispatchRequest<S = JsonValue> { readonly node_id: string; readonly state: S; readonly attempt: number }
+export interface WasmNodeExecution<S = JsonValue> { readonly outcome: NodeOutcome<S> & { readonly patch?: Partial<S> }; readonly tokens?: number; readonly cost_micros?: number }
+export type EngineCommand<S = JsonValue, I = JsonValue> =
+  | { readonly type: "run"; readonly execution_id: string; readonly state: S }
+  | { readonly type: "resume"; readonly checkpoint: CheckpointV1; readonly input: I }
+  | { readonly type: "continue"; readonly session: JsonValue; readonly execution: WasmNodeExecution<S> }
+  | { readonly type: "replay"; readonly events: readonly ExecutionEventV1[] }
+  | { readonly type: "inspect" };
+export type EngineResponse<S = JsonValue> =
+  | { readonly type: "event"; readonly event: ExecutionEventV1 }
+  | { readonly type: "dispatch"; readonly request: WasmDispatchRequest<S>; readonly session: JsonValue }
+  | { readonly type: "report"; readonly report: ExecutionReport<S> }
+  | { readonly type: "inspection"; readonly inspection: AgentInspection }
+  | { readonly type: "error"; readonly failure: Failure };
 export interface AgentInspection { readonly engine: EngineName; readonly graph: GraphDefinitionV1; readonly capabilities: readonly string[]; readonly limitations: readonly string[] }
 export interface ToolCallV1 { readonly version: 1; readonly call_id: string; readonly tool_id: string; readonly arguments: JsonValue }
 export interface ToolResultV1 { readonly version: 1; readonly call_id: string; readonly tool_id: string; readonly value: JsonValue; readonly usage: ResourceUsageV1 }

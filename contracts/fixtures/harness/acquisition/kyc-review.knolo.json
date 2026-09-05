@@ -1,0 +1,29 @@
+{
+  "version": 1,
+  "id": "acme/kyc-review",
+  "metadata": {
+    "name": "KYC review capability pack",
+    "description": "Hub skill pack covering kyc.read for next-run acquisition. Not a new binary format."
+  },
+  "authority": {
+    "capabilities": ["kyc.read"],
+    "namespaces": ["examples.kyc"]
+  },
+  "tools": [],
+  "namespaces": ["examples.kyc"],
+  "skills": [
+    {
+      "version": 1,
+      "id": "kyc-review",
+      "skillVersion": "1.0.0",
+      "name": "KYC review",
+      "triggers": ["kyc review", "identity check", "kyc.read"],
+      "domains": ["kyc", "compliance"],
+      "instructions": "Review identity documents against the stated kyc.read capability. Cite supporting evidence. Do not grant new authority.",
+      "requiredCapabilities": ["kyc.read"],
+      "requiredTools": [],
+      "knowledgeRefs": ["acme/kyc-review"],
+      "provenance": { "source": "local-pack", "packId": "acme/kyc-review" }
+    }
+  ]
+}

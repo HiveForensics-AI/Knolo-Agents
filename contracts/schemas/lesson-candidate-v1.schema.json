@@ -1,0 +1,28 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://knolo.dev/schemas/lesson-candidate-v1.schema.json",
+  "title": "LessonCandidateV1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["version", "id", "patternKey", "objective", "successCriteria", "experienceIds", "usefulness", "skillIds", "requiredCapabilities", "provenance"],
+  "properties": {
+    "version": { "const": 1 },
+    "id": { "type": "string" },
+    "patternKey": { "type": "string" },
+    "objective": { "type": "string" },
+    "successCriteria": { "type": "array", "items": { "type": "string" } },
+    "experienceIds": { "type": "array", "items": { "type": "string" } },
+    "usefulness": { "type": "integer", "minimum": 0 },
+    "skillIds": { "type": "array", "items": { "type": "string" } },
+    "requiredCapabilities": { "type": "array", "items": { "type": "string" } },
+    "provenance": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["source", "runIds"],
+      "properties": {
+        "source": { "const": "local-experience" },
+        "runIds": { "type": "array", "items": { "type": "string" } }
+      }
+    }
+  }
+}

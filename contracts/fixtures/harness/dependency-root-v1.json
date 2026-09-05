@@ -1,0 +1,19 @@
+{
+  "version": 1,
+  "algorithm": "knolo.harness.dependencies.v1",
+  "dependencies": [
+    {
+      "name": "acme/refund-policy",
+      "version": "1.2.0",
+      "sha256": "fca3f4f7338eb74ea56da96a1bdbba879384a5eebc8369e340beaa65972a9018",
+      "role": "knowledge"
+    },
+    {
+      "name": "ledger-review",
+      "version": "1.0.0",
+      "sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "role": "skill"
+    }
+  ],
+  "root": "knolo.harness.dependencies.v1:cfa7929fb4638643fa0139cecb485d6f05c24b04a74b2787eeb5ddcebe39d2c9"
+}

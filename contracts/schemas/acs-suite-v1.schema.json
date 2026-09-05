@@ -1,0 +1,38 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://knolo.dev/schemas/acs-suite-v1.schema.json",
+  "title": "AcsSuiteV1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["version", "id", "task", "baseline"],
+  "properties": {
+    "version": { "const": 1 },
+    "id": { "type": "string", "minLength": 1 },
+    "task": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["objective", "successCriteria"],
+      "properties": {
+        "objective": { "type": "string" },
+        "successCriteria": { "type": "array", "items": { "type": "string" }, "minItems": 1 },
+        "requiredEvidence": { "type": "array", "items": { "type": "string" } },
+        "expectedTools": { "type": "array", "items": { "type": "string" } },
+        "prohibitedActions": { "type": "array", "items": { "type": "string" } },
+        "targetTokens": { "type": "integer", "minimum": 1 },
+        "injectedFailure": { "type": "string" }
+      }
+    },
+    "baseline": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["output"],
+      "properties": {
+        "output": { "type": "string" },
+        "toolCalls": { "type": "array", "items": { "type": "string" } },
+        "status": { "enum": ["succeeded", "partial", "failed"] },
+        "tokens": { "type": "number" },
+        "latencyMs": { "type": "number" }
+      }
+    }
+  }
+}

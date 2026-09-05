@@ -1,0 +1,65 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://knolo.dev/schemas/context-selection-receipt-v1.schema.json",
+  "title": "ContextSelectionReceiptV1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["version", "query", "lexical", "selected", "dropped", "budget", "semanticRerank"],
+  "properties": {
+    "version": { "const": 1 },
+    "query": { "type": "string" },
+    "lexical": { "const": true },
+    "selected": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["kind", "id", "chars", "score", "required"],
+        "properties": {
+          "kind": { "enum": ["evidence", "constraint", "skill", "memory"] },
+          "id": { "type": "string" },
+          "chars": { "type": "integer", "minimum": 0 },
+          "score": { "type": "number" },
+          "required": { "type": "boolean" }
+        }
+      }
+    },
+    "dropped": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["kind", "id", "reason"],
+        "properties": {
+          "kind": { "enum": ["evidence", "constraint", "skill", "memory"] },
+          "id": { "type": "string" },
+          "reason": { "enum": ["budget", "redundant"] }
+        }
+      }
+    },
+    "budget": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["maxChars", "usedChars"],
+      "properties": {
+        "maxChars": { "type": "number" },
+        "usedChars": { "type": "integer", "minimum": 0 }
+      }
+    },
+    "semanticRerank": {
+      "anyOf": [
+        { "type": "null" },
+        {
+          "type": "object",
+          "required": ["kind", "effect", "deterministic"],
+          "properties": {
+            "kind": { "const": "external-effect" },
+            "effect": { "const": "semantic-rerank" },
+            "deterministic": { "const": false },
+            "model": { "type": "string" }
+          }
+        }
+      ]
+    }
+  }
+}
