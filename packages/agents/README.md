@@ -49,8 +49,9 @@ contracts, Cortex and ClaimGraph injection interfaces, multi-agent authority
 helpers, and an **ICP canister client** (`IcpAgentRuntimeClient` + candid-aligned
 DTOs). The ICP client does not hard-depend on `@dfinity/agent`; pass an actor
 built from your dfx declarations for live calls. See
-[`examples/icp-agent-canister/`](../../examples/icp-agent-canister/) and
-[architecture documentation](../../docs/architecture/README.md).
+[`examples/icp-agent-canister/`](https://github.com/HiveForensics-AI/Knolo-Agents/tree/main/examples/icp-agent-canister)
+and
+[architecture documentation](https://github.com/HiveForensics-AI/Knolo-Agents/blob/main/docs/architecture/README.md).
 
 ## Development
 
