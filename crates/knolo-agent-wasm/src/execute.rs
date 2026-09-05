@@ -13,11 +13,11 @@ use std::collections::BTreeMap;
 
 pub fn handle(request: ProtocolRequest) -> Vec<ProtocolResponse> {
     if request.version != 1 {
-        return vec![fail("unsupported", "unsupported protocol version")];
+        return error_response(fail("unsupported", "unsupported protocol version"));
     }
     let compiled = match request.graph.compile() {
         Ok(compiled) => compiled,
-        Err(error) => return vec![fail("definition", error.to_string())],
+        Err(error) => return error_response(fail("definition", error.to_string())),
     };
     match request.command {
         ProtocolCommand::Inspect => vec![ProtocolResponse::Inspection {
@@ -28,12 +28,10 @@ pub fn handle(request: ProtocolRequest) -> Vec<ProtocolResponse> {
                 limitations: LIMITATIONS,
             },
         }],
-        ProtocolCommand::Replay => {
-            vec![fail(
-                "unsupported",
-                "replay is a host-side compare; re-run with the same execution_id",
-            )]
-        }
+        ProtocolCommand::Replay => error_response(fail(
+            "unsupported",
+            "replay is a host-side compare; re-run with the same execution_id",
+        )),
         ProtocolCommand::Run {
             execution_id,
             state,
@@ -45,7 +43,7 @@ pub fn handle(request: ProtocolRequest) -> Vec<ProtocolResponse> {
             request.now_ms.unwrap_or(0),
         ) {
             Ok(responses) => responses,
-            Err(failure) => vec![failure],
+            Err(failure) => error_response(failure),
         },
         ProtocolCommand::Resume { checkpoint, input } => {
             match start_resume(
@@ -56,7 +54,7 @@ pub fn handle(request: ProtocolRequest) -> Vec<ProtocolResponse> {
                 request.now_ms.unwrap_or(0),
             ) {
                 Ok(responses) => responses,
-                Err(failure) => vec![failure],
+                Err(failure) => error_response(failure),
             }
         }
         ProtocolCommand::Continue { session, execution } => match continue_run(
@@ -67,7 +65,7 @@ pub fn handle(request: ProtocolRequest) -> Vec<ProtocolResponse> {
             request.now_ms.unwrap_or(0),
         ) {
             Ok(responses) => responses,
-            Err(failure) => vec![failure],
+            Err(failure) => error_response(failure),
         },
     }
 }
@@ -78,7 +76,7 @@ fn start_run(
     execution_id: String,
     state: Value,
     now_ms: u64,
-) -> Result<Vec<ProtocolResponse>, ProtocolResponse> {
+) -> Result<Vec<ProtocolResponse>, Failure> {
     let schema = require_schema(compiled.definition(), schema)?;
     schema
         .validate(&state)
@@ -130,7 +128,7 @@ fn start_resume(
     checkpoint: CheckpointV1,
     input: Value,
     now_ms: u64,
-) -> Result<Vec<ProtocolResponse>, ProtocolResponse> {
+) -> Result<Vec<ProtocolResponse>, Failure> {
     let schema = require_schema(compiled.definition(), schema)?;
     if checkpoint.version != 1 || checkpoint.graph_hash != compiled.hash() {
         return Err(fail("definition", "checkpoint graph hash mismatch"));
@@ -171,7 +169,7 @@ fn continue_run(
     mut session: PortableSession,
     execution: ProtocolNodeExecution,
     now_ms: u64,
-) -> Result<Vec<ProtocolResponse>, ProtocolResponse> {
+) -> Result<Vec<ProtocolResponse>, Failure> {
     let schema = require_schema(compiled.definition(), schema)?;
     if session.version != 1 || session.graph_hash != compiled.hash() {
         return Err(fail("definition", "session graph hash mismatch"));
@@ -317,7 +315,7 @@ fn dispatch_node(
     mut session: PortableSession,
     now_ms: u64,
     mut fresh: Vec<ProtocolEvent>,
-) -> Result<Vec<ProtocolResponse>, ProtocolResponse> {
+) -> Result<Vec<ProtocolResponse>, Failure> {
     let limits = compiled.definition().limits.clone();
     let node_id: NodeId = session
         .current_node
@@ -387,7 +385,7 @@ fn apply_patch(
     writes: &std::collections::BTreeSet<String>,
     schema: &StateSchemaV1,
     patch: Value,
-) -> Result<(), ProtocolResponse> {
+) -> Result<(), Failure> {
     let object = patch
         .as_object()
         .ok_or_else(|| fail("definition", "node patch must be a JSON object"))?;
@@ -435,7 +433,7 @@ fn fail_report(
     now_ms: u64,
     message: &str,
     mut fresh: Vec<ProtocolEvent>,
-) -> Result<Vec<ProtocolResponse>, ProtocolResponse> {
+) -> Result<Vec<ProtocolResponse>, Failure> {
     emit(
         session,
         Some(node_id.to_string()),
@@ -504,7 +502,7 @@ fn events(fresh: Vec<ProtocolEvent>) -> Vec<ProtocolResponse> {
 fn require_schema<'a>(
     graph: &GraphDefinitionV1,
     schema: Option<&'a StateSchemaV1>,
-) -> Result<&'a StateSchemaV1, ProtocolResponse> {
+) -> Result<&'a StateSchemaV1, Failure> {
     let _ = graph;
     schema.ok_or_else(|| {
         fail(
@@ -514,11 +512,13 @@ fn require_schema<'a>(
     })
 }
 
-fn fail(kind: &'static str, message: impl Into<String>) -> ProtocolResponse {
-    ProtocolResponse::Error {
-        failure: Failure {
-            kind,
-            message: message.into(),
-        },
+fn error_response(failure: Failure) -> Vec<ProtocolResponse> {
+    vec![ProtocolResponse::Error { failure }]
+}
+
+fn fail(kind: &'static str, message: impl Into<String>) -> Failure {
+    Failure {
+        kind,
+        message: message.into(),
     }
 }

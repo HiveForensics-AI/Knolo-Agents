@@ -27,6 +27,8 @@ until a `report`. Event kinds use `{ "type": "execution_started" }` (same shape
 as `@knolo/agents`). Per-revision `snapshots` are included on the report.
 
 Shared fixture: [`contracts/fixtures/conformance/portable-graph-v1.json`](../contracts/fixtures/conformance/portable-graph-v1.json).
+This crate is workspace-validated and is not published by the
+[release workflow](releasing.md).
 
 ## ICP canister Wasm (separate path)
 

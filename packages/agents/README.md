@@ -44,8 +44,21 @@ console.log(report.status); // { type: "terminated", result: 1 }
 
 Select `engine: "typescript"` for the portable deterministic subset. Select
 `engine: "wasm"` only when supplying an explicit `WasmProtocolAdapter`; the
-package never silently falls back to another engine. Tool calls, retrieval, and
-durable effects remain host-bound or Rust/WASM integrations.
+package never silently falls back to another engine. The WASM adapter runs
+state, routing, and suspension, then `dispatch`es each node so host handlers
+answer with `continue`. Tool calls, retrieval, and durable effects remain
+host-bound.
+
+```ts
+import { Agent } from "@knolo/agents";
+
+const agent = Agent.load({
+  definition,
+  engine: "wasm",
+  wasm: { command: (request) => wasmModule.command(request) },
+});
+await agent.run({ count: 0 });
+```
 
 Wrap a callable agent with the harness:
 
@@ -171,11 +184,13 @@ pnpm --filter @knolo/agents test
 
 ## Status and license
 
-This is the `0.1.x` TypeScript surface converting to a `0.2` universal harness.
-Freeze classes (frozen L3 APIs vs stable-on-path-to-1.0 harness vs experimental
-examples) are in [`docs/compatibility.md`](../../docs/compatibility.md). A 1.0
-version bump still waits on remaining P0 items in [`FUTURE.md`](../../FUTURE.md)
-(pack-owned run budgets). TypeScript state-snapshot replay and portable WASM
-execute/resume are in-tree.
+In-tree npm version is **0.1.3**. The additive harness is intended as **0.2.0**
+on the next publish after this conversion merges (see
+[`docs/releasing.md`](../../docs/releasing.md)). Freeze classes (frozen L3 APIs
+vs stable-on-path-to-1.0 harness vs experimental examples) are in
+[`docs/compatibility.md`](../../docs/compatibility.md). A 1.0 version bump still
+waits on remaining P0 items in [`FUTURE.md`](../../FUTURE.md) (pack-owned run
+budgets). TypeScript state-snapshot replay and portable WASM execute/resume are
+in-tree.
 
 The package is licensed under Apache License 2.0. See [LICENSE](LICENSE).

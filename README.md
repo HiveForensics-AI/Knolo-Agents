@@ -531,12 +531,17 @@ console.log(report.status); // { type: "terminated", result: 1 }
 // Portable deterministic subset (state, routing, suspension)
 Agent.load({ definition, engine: "typescript" });
 
-// Requires explicit adapter — never falls back
-Agent.load({ definition, engine: "wasm", wasm: myAdapter });
+// Requires explicit adapter — never falls back. The adapter `command`
+// loop is inspect / run / resume / continue (host node dispatch).
+Agent.load({
+  definition,
+  engine: "wasm",
+  wasm: { command: (request) => wasmModule.command(request) },
+});
 ```
 
-Tool calls, retrieval, and durable effects remain host-bound or Rust/WASM
-integrations. ICP is a separate adapter path, not an `Agent.load` engine.
+Tool calls, retrieval, and durable effects remain host-bound. ICP is a
+separate adapter path, not an `Agent.load` engine.
 
 ### ICP client (TypeScript) — adapter, not harness core
 
@@ -811,6 +816,7 @@ See [docs/compatibility.md](docs/compatibility.md).
 | Docs home | [docs/README.md](docs/README.md) |
 | Universal harness contract | [docs/universal-harness-contract.md](docs/universal-harness-contract.md) |
 | Compatibility / freeze classes | [docs/compatibility.md](docs/compatibility.md) |
+| Releases / next publish | [docs/releasing.md](docs/releasing.md) |
 | Migration | [docs/migration.md](docs/migration.md) |
 | Security (harness checklist) | [docs/security.md](docs/security.md) |
 | Architecture overview | [docs/architecture/README.md](docs/architecture/README.md) |

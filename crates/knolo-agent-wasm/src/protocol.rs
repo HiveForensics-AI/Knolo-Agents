@@ -37,6 +37,7 @@ pub enum ProtocolCommand {
 }
 
 #[derive(Debug, Serialize)]
+#[allow(clippy::large_enum_variant)]
 #[serde(tag = "type", rename_all = "snake_case")]
 pub enum ProtocolResponse {
     Inspection {
@@ -175,7 +176,7 @@ pub struct PortableSession {
     pub resume_input: Option<Value>,
 }
 
-#[derive(Debug, Serialize)]
+#[derive(Debug, Clone, Serialize)]
 pub struct Failure {
     #[serde(rename = "type")]
     pub kind: &'static str,

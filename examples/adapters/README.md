@@ -1,9 +1,10 @@
 # Vendor adapter examples
 
 Thin Grok Build, Grok, and OpenClaw wrappers around the same harness contracts.
-Vendor SDKs are **not** dependencies of `@knolo/agents`. Each example injects a
-host-owned `complete()` (or `fetch`) and reuses `TaskV1`, compiled context,
-local skills, and the optional registry policy.
+Vendor SDKs are **not** dependencies of `@knolo/agents` and are **not** published
+with the npm package. Each example injects a host-owned `complete()` (or `fetch`)
+and reuses `TaskV1`, compiled context, local skills, and the optional registry
+policy.
 
 | Path | Level | Host surface |
 | --- | --- | --- |
