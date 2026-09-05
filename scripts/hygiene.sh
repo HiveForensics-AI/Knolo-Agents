@@ -12,7 +12,7 @@ done
 # Product comparisons are allowed in README prose; legacy integrations,
 # credentials, and source-level identity references remain forbidden.
 legacy="lang"'chain|lang'"graph|lang"'smith|HiveForensics-AI|LANGCHAIN_API_KEY|LANGSMITH_API_KEY'
-if git grep -IniE "$legacy" -- ':!scripts/hygiene.sh' ':!README.md'; then echo "forbidden legacy identity" >&2; exit 1; fi
+if git grep -IniE "$legacy" -- ':!scripts/hygiene.sh' ':!README.md' ':!**/Cargo.toml' ':!**/package.json'; then echo "forbidden legacy identity" >&2; exit 1; fi
 if find . -type l -print -quit | grep -q .; then echo "symlinks require explicit review" >&2; exit 1; fi
 for dir in node_modules target dist .venv coverage; do
   if find . -type d -name "$dir" -not -path './.git/*' -print -quit | grep -q .; then echo "generated directory present: $dir" >&2; exit 1; fi

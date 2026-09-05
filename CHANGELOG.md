@@ -10,6 +10,13 @@ called out explicitly and may evolve without a crates.io release.
 
 ## [Unreleased]
 
+## [0.2.1] - 2026-09-05
+
+### Fixed
+
+- Crate `repository` / `homepage` URLs now point at the public GitHub
+  repository, so crates.io README documentation links resolve.
+
 ## [0.2.0] - 2026-09-05
 
 ### Added

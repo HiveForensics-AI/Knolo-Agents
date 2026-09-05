@@ -6,7 +6,7 @@ license.workspace = true
 rust-version.workspace = true
 description = "ICP canister host for the Knolo agent control plane."
 publish = false
-repository = "https://github.com/knolo-ai/knolo-agents"
+repository = "https://github.com/HiveForensics-AI/Knolo-Agents"
 
 [lib]
 crate-type = ["cdylib", "rlib"]
