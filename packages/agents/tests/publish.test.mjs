@@ -64,6 +64,11 @@ test("buildCapabilityPack wraps skill metadata in a Core V5 image", async () => 
   const decoded = await decodeCapabilityPack(built.bytes, { knowledge, digest: built.sha256 });
   assert.equal(decoded.skills[0].id, candidate.skill.id);
   assert.equal(decoded.packId, "acme/learned-fraud");
+  const compressed = knowledge.compress(built.bytes, { mode: "balanced" });
+  assert.equal(compressed.stateRoot, built.stateRoot);
+  const decodedCompressed = await decodeCapabilityPack(compressed.bytes, { knowledge });
+  assert.equal(decodedCompressed.skills[0].id, candidate.skill.id);
+  assert.equal(decodedCompressed.packId, "acme/learned-fraud");
 });
 
 test("publishLearnedSkill publishes to a fixture Hub and a second Grok Build harness pulls it", async () => {

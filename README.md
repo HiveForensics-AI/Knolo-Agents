@@ -16,9 +16,9 @@ implementations stay outside this workspace.
 | `knolo-agent` | Native scheduler, policy, packs, host effects | crates.io (workspace version) |
 | `knolo-agent-wasm` | Browser/JSON WASM protocol adapter | workspace-only |
 | `knolo-agent-icp` | Internet Computer canister host | workspace-only |
-| `@knolo/agents` | TypeScript builders, engines, ICP client | npm (`0.1.x`) |
+| `@knolo/agents` | TypeScript builders, engines, ICP client | npm (`0.3.0`) |
 
-Current workspace version line: **0.1.x** (early release; APIs may evolve before 1.0).
+Current published versions: `@knolo/agents` **0.3.0**, `knolo-agent` / `knolo-agent-core` **0.2.2**. Early release; APIs may evolve before 1.0. Artifacts version independently.
 
 ---
 
@@ -385,7 +385,7 @@ provide:
 
 This repository only defines **narrow injection interfaces**. It does not
 contain core source, storage, credentials, or release process. Consumers install
-a compatible `@knolo/core` (`^3.5.0` peer on the TypeScript package) themselves.
+a compatible `@knolo/core` (`^5.5.0` peer on the TypeScript package) themselves.
 
 See [docs/core-boundary.md](https://github.com/HiveForensics-AI/Knolo-Agents/blob/main/docs/core-boundary.md).
 
@@ -734,7 +734,7 @@ Report vulnerabilities per [SECURITY.md](https://github.com/HiveForensics-AI/Kno
 - Version 1 readers reject unknown major versions.
 - Resume/replay require **exact** artifact hashes.
 - Rust: **1.78+**
-- TypeScript: **Node 20+**, optional `@knolo/core` **^3.5.0**
+- TypeScript: **Node 20+**, optional `@knolo/core` **^5.5.0**
 - TypeScript and WASM exchange only documented JSON contracts
 
 See [docs/compatibility.md](https://github.com/HiveForensics-AI/Knolo-Agents/blob/main/docs/compatibility.md).
