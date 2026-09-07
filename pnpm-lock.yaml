@@ -11,16 +11,16 @@ importers:
   packages/agents:
     devDependencies:
       '@knolo/core':
-        specifier: ^5.1.0
-        version: 5.1.0
+        specifier: ^5.5.0
+        version: 5.5.0
       typescript:
         specifier: ^5.6.3
         version: 5.9.3
 
 packages:
 
-  '@knolo/core@5.1.0':
-    resolution: {integrity: sha512-C/DXaD3YiL6YHEOcHhQerKoYCCWKI78vq2xnL3yYnJiO20e959XjruNktdhwlM2+yko05kb1qE4T7Rrr6SWWSQ==}
+  '@knolo/core@5.5.0':
+    resolution: {integrity: sha512-9Ee4ov0AxR0rynrpnEfHhs08BZuzkotXSOa3UAT4dn4QXzIIB30o+mgvDVbyc0bu3dwulXHPea73/Kys4Sfk8g==}
 
   typescript@5.9.3:
     resolution: {integrity: sha512-jl1vZzPDinLr9eUt3J/t7V6FgNEw9QjvBPdysz9KfQDD41fQrC2Y4vKQdiaUpFT4bXlb1RHhLpp8wtm6M5TgSw==}
@@ -29,6 +29,6 @@ packages:
 
 snapshots:
 
-  '@knolo/core@5.1.0': {}
+  '@knolo/core@5.5.0': {}
 
   typescript@5.9.3: {}

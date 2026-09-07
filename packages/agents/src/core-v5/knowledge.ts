@@ -7,6 +7,14 @@ export interface KnowledgeImageHandleV5 {
   readonly image: unknown;
 }
 
+/** Opt-in VQF-1 transcode options forwarded to `@knolo/core` `compressKnowledgeImageV5`. */
+export interface CompressKnowledgeImageOptionsV5 {
+  readonly mode?: "fast" | "balanced" | "max";
+  readonly objects?: boolean;
+  readonly events?: boolean;
+  readonly index?: boolean;
+}
+
 type KnowledgeCore = {
   createKnowledgeImageV5: (options: { actor?: string; objects: Array<{ kind: string; bytes: Uint8Array; meta: Record<string, unknown> }> }) => {
     bytes: Uint8Array;
@@ -16,7 +24,12 @@ type KnowledgeCore = {
   verifyKnowledgeImageV5: (bytes: Uint8Array) => { stateRoot: string; commitDigest: string };
   mountKnowledgeImageV5: (bytes: Uint8Array) => { stateRoot: string; commitDigest: string; bytes: Uint8Array };
   inspectKnowledgeImageV5: (bytes: Uint8Array) => { stateRoot: string; commitDigest: string };
-  queryKnowledgeImageV5: (image: unknown, expression: string) => unknown;
+  queryKnowledgeImageV5: (bytes: Uint8Array, expression: string) => unknown;
+  compressKnowledgeImageV5: (bytes: Uint8Array, options?: CompressKnowledgeImageOptionsV5) => {
+    bytes: Uint8Array;
+    stateRoot: string;
+    commitDigest: string;
+  };
 };
 
 export class V5KnowledgeAdapter {
@@ -53,7 +66,12 @@ export class V5KnowledgeAdapter {
   }
 
   query(handle: KnowledgeImageHandleV5, expression: string): unknown {
-    return this.core.queryKnowledgeImageV5(handle.image, expression);
+    return this.core.queryKnowledgeImageV5(handle.bytes, expression);
+  }
+
+  compress(bytes: Uint8Array, options: CompressKnowledgeImageOptionsV5 = {}): KnowledgeImageHandleV5 {
+    const compressed = this.core.compressKnowledgeImageV5(bytes, options);
+    return this.mount(compressed.bytes);
   }
 
   objects(handle: KnowledgeImageHandleV5): Array<{ id: string; kind: string; text: string; meta: Record<string, unknown> }> {

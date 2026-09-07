@@ -1,6 +1,6 @@
-/** Optional `@knolo/core` ^5.1.0 loader. Harness code fails closed when Core is absent. */
+/** Optional `@knolo/core` ^5.5.0 loader. Harness code fails closed when Core is absent. */
 
-export const CORE_V5_PEER = "^5.1.0";
+export const CORE_V5_PEER = "^5.5.0";
 export const CORE_ABSENT_MESSAGE = `Core V5 is required for this adapter; install @knolo/core@${CORE_V5_PEER}`;
 
 /** Structural subset of `@knolo/core` used by Agents adapters. */
@@ -10,6 +10,8 @@ export interface CoreV5Module {
   readonly mountKnowledgeImageV5: (...args: never[]) => unknown;
   readonly inspectKnowledgeImageV5: (...args: never[]) => unknown;
   readonly queryKnowledgeImageV5: (...args: never[]) => unknown;
+  readonly compressKnowledgeImageV5: (...args: never[]) => unknown;
+  readonly openKnowledgeImageV5: (...args: never[]) => unknown;
   readonly parseKnowledgeQueryV5: (...args: never[]) => unknown;
   readonly createCortex: (...args: never[]) => unknown;
   readonly remember: (...args: never[]) => unknown;

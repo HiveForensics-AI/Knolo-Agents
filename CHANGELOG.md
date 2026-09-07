@@ -10,6 +10,24 @@ called out explicitly and may evolve without a crates.io release.
 
 ## [Unreleased]
 
+## [0.3.0] - 2026-09-07
+
+`@knolo/agents` only. `knolo-agent` and `knolo-agent-core` remain **0.2.2**.
+
+### Added
+
+- `V5KnowledgeAdapter.compress()` pass-through to Core `compressKnowledgeImageV5`.
+  Compression stays opt-in; `createImage` and skill pack builds remain
+  uncompressed.
+
+### Changed
+
+- Optional `@knolo/core` peer is now **`^5.5.0`**. V5 adapters read
+  VQF-compressed Knowledge Images through Core `mount` / `verify` and do not
+  encode VQF in this repository.
+- Documentation peer pins that still said `^3.5.0` or `^5.1.0` now match
+  `^5.5.0`.
+
 ## [0.2.2] - 2026-09-05
 
 ### Fixed

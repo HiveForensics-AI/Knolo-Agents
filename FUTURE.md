@@ -167,7 +167,7 @@ examples, evaluation harnesses, and pre-1.0 API freeze work.
   demo, consumers must invent integration themselves.
 - **Rough acceptance criteria:**
   - Optional demo or docs path that depends on a published `@knolo/core`
-    version range (currently documented as `^3.5.0` for TypeScript).
+    version range (currently documented as `^5.5.0` for TypeScript).
   - No vendoring of core source, credentials, or storage into this repository.
   - Demo fails closed when core is absent (explicit error, not partial silent
     stubs).

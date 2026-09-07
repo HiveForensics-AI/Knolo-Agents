@@ -31,7 +31,7 @@ function walk(dir) {
 }
 
 test("Core V5 peer bound and fail-closed without Core", () => {
-  assert.equal(CORE_V5_PEER, "^5.1.0");
+  assert.equal(CORE_V5_PEER, "^5.5.0");
   assert.throws(() => requireCoreV5(null), new RegExp(CORE_ABSENT_MESSAGE.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")));
   assert.throws(() => V5KnowledgeAdapter.from(null), /Core V5 is required/);
 });
@@ -67,7 +67,7 @@ test("Core V5 knowledge, cortex, claim, and run adapters work with @knolo/core",
   try {
     core = await import("@knolo/core");
   } catch (error) {
-    assert.fail(`@knolo/core ^5.1.0 must be available as a devDependency: ${error}`);
+    assert.fail(`@knolo/core ^5.5.0 must be available as a devDependency: ${error}`);
   }
 
   const knowledge = V5KnowledgeAdapter.from(core);
@@ -76,6 +76,17 @@ test("Core V5 knowledge, cortex, claim, and run adapters work with @knolo/core",
   assert.equal(knowledge.verify(handle.bytes).stateRoot, handle.stateRoot);
   const queried = knowledge.query(handle, "FROM metadata LIMIT 10");
   assert.equal(queried.hits.length, 1);
+
+  const compressed = knowledge.compress(handle.bytes, { mode: "balanced" });
+  assert.equal(compressed.stateRoot, handle.stateRoot);
+  assert.equal(compressed.commitDigest, handle.commitDigest);
+  assert.equal(knowledge.verify(compressed.bytes).stateRoot, handle.stateRoot);
+  assert.deepEqual(
+    knowledge.objects(compressed).map(object => ({ kind: object.kind, text: object.text })),
+    knowledge.objects(handle).map(object => ({ kind: object.kind, text: object.text })),
+  );
+  const compressedQuery = knowledge.query(compressed, "FROM metadata LIMIT 10");
+  assert.equal(compressedQuery.hits.length, 1);
 
   const cortex = V5CortexAdapter.from(core);
   cortex.remember("suspicious ledger pattern", ["fraud"]);

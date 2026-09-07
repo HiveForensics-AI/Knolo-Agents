@@ -9,9 +9,9 @@ execution adapters for Knolo Agents.
 pnpm add @knolo/agents
 ```
 
-`@knolo/core` is an optional peer integration for applications that inject
-Cortex or ClaimGraph capabilities; this package does not bundle or implement
-that storage layer.
+`@knolo/core` `^5.5.0` is an optional peer integration for applications that
+inject Cortex, ClaimGraph, or Knowledge Image capabilities; this package does
+not bundle, encode VQF, or implement that storage layer.
 
 ## Usage
 
@@ -63,5 +63,6 @@ pnpm --filter @knolo/agents test
 
 ## Status and license
 
-This is the `0.1.0` early release of the TypeScript surface; APIs may evolve
-before 1.0. The package is licensed under Apache License 2.0. See [LICENSE](LICENSE).
+This is the `0.3.0` release of the TypeScript surface; APIs may evolve before
+1.0. The optional `@knolo/core` peer is `^5.5.0`. The package is licensed under
+Apache License 2.0. See [LICENSE](LICENSE).
