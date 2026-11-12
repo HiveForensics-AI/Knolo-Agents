@@ -41,15 +41,15 @@ const receipt = await closeSpawn(issued.envelope, result.output, {
 
 ## What a receipt means
 
-A passing spawn receipt means the declared checks passed:
+A passing spawn receipt means every declared check passed:
 
 - the envelope root still matches the issued bytes
 - no prohibited tool was called
-- `evaluateInvocation` scored the output against the task
+- every `evaluateInvocation` check passed, including success-criteria coverage
 
-A passing receipt does not mean the output is true. That is the same limit as a KAR `SATISFIED` result and a verified Cortex trace.
+A failed check sets `passed` to false. When the caller reports `succeeded` and a check fails, `finalStatus` is `partial`. A passing receipt does not mean the output is true. That is the same limit as a KAR `SATISFIED` result and a verified Cortex trace.
 
-`closeSpawn` refuses the close when a tool call is on the task's prohibited list, when the envelope root does not match, or when a supplied clock is past `expiryMs`.
+`closeSpawn` refuses the close when a tool call is on the task's prohibited list, when the envelope root does not match, when a supplied clock is past `expiryMs`, or when `status` is outside `succeeded`, `partial`, `failed`, and `suspended`.
 
 ## Authority
 

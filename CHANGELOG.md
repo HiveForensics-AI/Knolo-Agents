@@ -20,6 +20,13 @@ called out explicitly and may evolve without a crates.io release.
 - The Grok Build example is a parent that issues a spawn, answers from the
   brief, and closes the receipt. Recorded fixtures stay offline.
 
+### Fixed
+
+- A spawn receipt passes only when every evaluation check passes, including
+  success criteria. `closeSpawn` rejects a status outside `succeeded`,
+  `partial`, `failed`, and `suspended`. Rust spawn digests format JSON
+  numbers with the same ECMAScript rules as `JSON.stringify`.
+
 ## [0.3.0] - 2026-09-07
 
 `@knolo/agents` only. `knolo-agent` and `knolo-agent-core` remain **0.2.2**.

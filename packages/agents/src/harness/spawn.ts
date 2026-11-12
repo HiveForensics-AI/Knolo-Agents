@@ -20,6 +20,7 @@ import type {
 import { HarnessError } from "./types.js";
 
 const LEVELS = new Set(["L0", "L1", "L2", "L3", "platform"]);
+const CLOSE_STATUSES: readonly InvocationStatusV1[] = ["succeeded", "partial", "failed", "suspended"];
 
 export interface SpawnAuthorityV1 {
   readonly capabilities: readonly string[];
@@ -213,19 +214,33 @@ export async function closeSpawn(envelope: SpawnEnvelopeV1, output: unknown, opt
   const prohibited = parsed.task.prohibitedActions ?? [];
   const refused = toolCalls.filter(call => prohibited.includes(call));
   if (refused.length > 0) throw new HarnessError(`spawn close refused prohibited tool: ${refused.join(",")}`);
-  const status = options.status ?? "succeeded";
-  const evaluation = evaluateInvocation(parsed.task, status, output, toolCalls);
+  const reported = requireCloseStatus(options.status ?? "succeeded");
+  const evaluation = evaluateInvocation(parsed.task, reported, output, toolCalls);
+  const finalStatus = closeFinalStatus(reported, evaluation);
   return {
     version: 1,
     envelopeRoot: parsed.envelopeRoot,
     outputRoot: await digestRoot("output", output ?? null),
-    evaluation,
+    evaluation: { ...evaluation, status: finalStatus },
     skillSelectionReceipt: parsed.skillSelectionReceipt,
     evidenceReceipts: [...parsed.evidenceReceipts],
     knowledgeStateRoots: [...parsed.knowledgeStateRoots],
-    finalStatus: evaluation.prohibitedViolations.length ? "failed" : status,
+    finalStatus,
     output: jsonValue(output),
   };
+}
+
+function requireCloseStatus(value: unknown): InvocationStatusV1 {
+  if (typeof value !== "string" || !CLOSE_STATUSES.includes(value as InvocationStatusV1)) {
+    throw new HarnessError("spawn close status must be succeeded, partial, failed, or suspended");
+  }
+  return value as InvocationStatusV1;
+}
+
+function closeFinalStatus(reported: InvocationStatusV1, evaluation: EvaluationReceiptV1): InvocationStatusV1 {
+  if (evaluation.prohibitedViolations.length > 0 || reported === "failed") return "failed";
+  if (!evaluation.passed && reported === "succeeded") return "partial";
+  return reported;
 }
 
 export function parseSpawnEnvelope(value: SpawnEnvelopeV1): SpawnEnvelopeV1 {

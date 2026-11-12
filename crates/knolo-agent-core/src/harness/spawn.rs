@@ -4,8 +4,10 @@ use super::receipt::{EvaluationReceiptV1, InvocationStatusV1};
 use super::task::TaskV1;
 use crate::CoreError;
 use serde::{Deserialize, Serialize};
-use serde_json::{Map, Value};
+use serde_json::value::RawValue;
+use serde_json::Value;
 use sha2::{Digest, Sha256};
+use std::collections::BTreeMap;
 
 const LEVELS: &[&str] = &["L0", "L1", "L2", "L3", "platform"];
 
@@ -97,12 +99,10 @@ pub struct SpawnEnvelopeV1 {
 
 impl SpawnEnvelopeV1 {
     pub fn parse(value: &str) -> Result<Self, CoreError> {
-        let raw: Value = serde_json::from_str(value)
-            .map_err(|error| CoreError::SchemaViolation(error.to_string()))?;
-        let envelope: Self = serde_json::from_value(raw.clone())
+        let envelope: Self = serde_json::from_str(value)
             .map_err(|error| CoreError::SchemaViolation(error.to_string()))?;
         envelope.validate_shape()?;
-        envelope.verify_root(&raw)?;
+        envelope.verify_root(value)?;
         Ok(envelope)
     }
 
@@ -169,13 +169,16 @@ impl SpawnEnvelopeV1 {
         Ok(())
     }
 
-    fn verify_root(&self, raw: &Value) -> Result<(), CoreError> {
-        let mut body = raw.clone();
-        let object = body
-            .as_object_mut()
-            .ok_or_else(|| CoreError::SchemaViolation("spawn envelope must be an object".into()))?;
-        object.remove("envelopeRoot");
-        let computed = digest_root("spawn", &body);
+    fn verify_root(&self, raw: &str) -> Result<(), CoreError> {
+        let mut body: BTreeMap<String, Box<RawValue>> = serde_json::from_str(raw)
+            .map_err(|error| CoreError::SchemaViolation(error.to_string()))?;
+        if body.remove("envelopeRoot").is_none() {
+            return Err(CoreError::SchemaViolation(
+                "spawn envelope must be an object".into(),
+            ));
+        }
+        let canonical = canonical_object(&body)?;
+        let computed = digest_text("spawn", &canonical);
         if computed != self.envelope_root {
             return Err(CoreError::SchemaViolation(
                 "spawn envelope root mismatch".into(),
@@ -208,7 +211,12 @@ impl SpawnReceiptV1 {
                 "SpawnReceiptV1.version must be 1".into(),
             ));
         }
-        let output_root = digest_root("output", &receipt.output);
+        let raw: BTreeMap<String, Box<RawValue>> = serde_json::from_str(value)
+            .map_err(|error| CoreError::SchemaViolation(error.to_string()))?;
+        let output = raw
+            .get("output")
+            .ok_or_else(|| CoreError::SchemaViolation("spawn output is required".into()))?;
+        let output_root = digest_text("output", &canonical_raw(output.get())?);
         if output_root != receipt.output_root {
             return Err(CoreError::SchemaViolation(
                 "spawn output root mismatch".into(),
@@ -218,30 +226,111 @@ impl SpawnReceiptV1 {
     }
 }
 
-pub fn digest_root(label: &str, value: &Value) -> String {
-    let canonical = canonical_json(value);
+fn digest_text(label: &str, canonical: &str) -> String {
     let digest = Sha256::digest(canonical.as_bytes());
     format!("{label}:{}", hex_encode(&digest))
 }
 
-fn canonical_json(value: &Value) -> String {
-    serde_json::to_string(&canonicalize(value)).expect("canonical json")
+/// Canonical JSON with sorted object keys. Numbers are parsed with Rust's
+/// decimal conversion and written with ECMAScript `JSON.stringify` rules.
+/// serde_json's own float parser and formatter disagree with that text.
+fn canonical_raw(text: &str) -> Result<String, CoreError> {
+    let mut out = String::new();
+    write_raw(&mut out, text)?;
+    Ok(out)
 }
 
-fn canonicalize(value: &Value) -> Value {
-    match value {
-        Value::Object(map) => {
-            let mut keys: Vec<&String> = map.keys().collect();
-            keys.sort();
-            let mut sorted = Map::new();
-            for key in keys {
-                sorted.insert(key.clone(), canonicalize(&map[key]));
-            }
-            Value::Object(sorted)
+fn canonical_object(map: &BTreeMap<String, Box<RawValue>>) -> Result<String, CoreError> {
+    let mut out = String::new();
+    write_object(&mut out, map)?;
+    Ok(out)
+}
+
+fn write_raw(out: &mut String, text: &str) -> Result<(), CoreError> {
+    let text = text.trim();
+    match text.as_bytes().first() {
+        Some(b'{') => {
+            let map: BTreeMap<String, Box<RawValue>> = serde_json::from_str(text)
+                .map_err(|error| CoreError::SchemaViolation(error.to_string()))?;
+            write_object(out, &map)
         }
-        Value::Array(items) => Value::Array(items.iter().map(canonicalize).collect()),
-        other => other.clone(),
+        Some(b'[') => {
+            let items: Vec<Box<RawValue>> = serde_json::from_str(text)
+                .map_err(|error| CoreError::SchemaViolation(error.to_string()))?;
+            out.push('[');
+            for (index, item) in items.iter().enumerate() {
+                if index > 0 {
+                    out.push(',');
+                }
+                write_raw(out, item.get())?;
+            }
+            out.push(']');
+            Ok(())
+        }
+        Some(b'"') => {
+            let value: String = serde_json::from_str(text)
+                .map_err(|error| CoreError::SchemaViolation(error.to_string()))?;
+            push_json_string(out, &value);
+            Ok(())
+        }
+        Some(b't') => {
+            if text != "true" {
+                return Err(CoreError::SchemaViolation("invalid JSON literal".into()));
+            }
+            out.push_str("true");
+            Ok(())
+        }
+        Some(b'f') => {
+            if text != "false" {
+                return Err(CoreError::SchemaViolation("invalid JSON literal".into()));
+            }
+            out.push_str("false");
+            Ok(())
+        }
+        Some(b'n') => {
+            if text != "null" {
+                return Err(CoreError::SchemaViolation("invalid JSON literal".into()));
+            }
+            out.push_str("null");
+            Ok(())
+        }
+        Some(b'-') | Some(b'0'..=b'9') => write_number_lexeme(out, text),
+        _ => Err(CoreError::SchemaViolation(
+            "spawn canonical JSON value is invalid".into(),
+        )),
     }
+}
+
+fn write_object(out: &mut String, map: &BTreeMap<String, Box<RawValue>>) -> Result<(), CoreError> {
+    out.push('{');
+    for (index, (key, value)) in map.iter().enumerate() {
+        if index > 0 {
+            out.push(',');
+        }
+        push_json_string(out, key);
+        out.push(':');
+        write_raw(out, value.get())?;
+    }
+    out.push('}');
+    Ok(())
+}
+
+fn write_number_lexeme(out: &mut String, text: &str) -> Result<(), CoreError> {
+    let value: f64 = text
+        .parse()
+        .map_err(|_| CoreError::SchemaViolation(format!("invalid JSON number {text}")))?;
+    if !value.is_finite() {
+        // JSON.parse of an overflowing number is Infinity, and JSON.stringify writes null.
+        out.push_str("null");
+        return Ok(());
+    }
+    let mut buffer = ryu_js::Buffer::new();
+    out.push_str(buffer.format_finite(value));
+    Ok(())
+}
+
+fn push_json_string(out: &mut String, text: &str) {
+    out.push_str(&serde_json::to_string(text).expect("json string"));
 }
 
 fn hex_encode(bytes: &[u8]) -> String {

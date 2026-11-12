@@ -138,6 +138,20 @@ test("MCP spawn issues an envelope and close refuses a prohibited tool", async (
   });
   assert.equal(closed.structured.evaluation.passed, true);
   assert.equal(closed.structured.finalStatus, "succeeded");
+  const unmet = await server.callTool(KNOLO_MCP_TOOLS.close, {
+    envelope: issued.structured.envelope,
+    output: "not the criteria",
+    status: "succeeded",
+  });
+  assert.equal(unmet.structured.evaluation.passed, false);
+  assert.equal(unmet.structured.finalStatus, "partial");
+  const invalid = await server.callTool(KNOLO_MCP_TOOLS.close, {
+    envelope: issued.structured.envelope,
+    output: "identify suspicious transactions and cite supporting evidence",
+    status: "complete",
+  });
+  assert.equal(invalid.isError, true);
+  assert.match(invalid.content[0].text, /status must be succeeded/);
   const refused = await server.callTool(KNOLO_MCP_TOOLS.close, {
     envelope: issued.structured.envelope,
     output: "completed via wire_transfer",

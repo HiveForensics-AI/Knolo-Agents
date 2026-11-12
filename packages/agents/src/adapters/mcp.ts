@@ -302,7 +302,7 @@ async function defaultClose(args: JsonValue, _ctx: HarnessContextV1 | undefined,
   if (!("output" in body)) throw new HarnessError("invalid params: knolo.close requires output");
   const toolCalls = Array.isArray(body.toolCalls) ? body.toolCalls.map(item => String(item)) : [];
   const receipt = await closeSpawn(body.envelope as unknown as SpawnEnvelopeV1, body.output, {
-    status: parseStatus(body.status),
+    ...(body.status !== undefined ? { status: body.status as InvocationStatusV1 } : {}),
     toolCalls,
     clock: options.clock,
   });

@@ -179,4 +179,14 @@ test("closeSpawn refuses a prohibited tool and a tampered envelope", async () =>
   );
   const partial = await closeSpawn(issued.envelope, "not the criteria", { status: "succeeded", toolCalls: [] });
   assert.equal(partial.evaluation.checks.find(check => check.id === "successCriteria").passed, false);
+  assert.equal(partial.evaluation.passed, false);
+  assert.equal(partial.evaluation.status, "partial");
+  assert.equal(partial.finalStatus, "partial");
+  const failed = await closeSpawn(issued.envelope, output, { status: "failed" });
+  assert.equal(failed.evaluation.passed, false);
+  assert.equal(failed.finalStatus, "failed");
+  await assert.rejects(
+    () => closeSpawn(issued.envelope, output, { status: "complete" }),
+    /status must be succeeded, partial, failed, or suspended/,
+  );
 });
