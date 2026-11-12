@@ -7,6 +7,7 @@
 mod cbor;
 mod dependency;
 mod receipt;
+mod spawn;
 mod task;
 
 pub use dependency::{
@@ -16,4 +17,5 @@ pub use dependency::{
 pub use receipt::{
     EvaluationCheckV1, EvaluationReceiptV1, HarnessRunReceiptV1, InvocationStatusV1,
 };
+pub use spawn::{SpawnAuthorityV1, SpawnEnvelopeV1, SpawnParentV1, SpawnReceiptV1};
 pub use task::{ConstraintV1, HarnessBudgetV1, TaskV1};

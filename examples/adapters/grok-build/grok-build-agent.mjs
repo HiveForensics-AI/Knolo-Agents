@@ -1,5 +1,5 @@
-import { knoloMcpBridge, KNOLO_MCP_TOOLS } from "../../../packages/agents/dist/index.js";
-import { promptFromContext } from "../shared/contracts.mjs";
+import { closeSpawn, issueSpawn, knoloMcpBridge, KNOLO_MCP_TOOLS } from "../../../packages/agents/dist/index.js";
+import { promptFromContext, sharedEvidence, sharedSkills, sharedTask } from "../shared/contracts.mjs";
 
 /**
  * L0/L1 Grok Build session adapter. The host owns the Grok Build complete()
@@ -81,6 +81,48 @@ export function toGrokBuildTool(tool) {
       parameters: tool.inputSchema ?? { type: "object" },
     },
   };
+}
+
+export async function runGrokBuildParent(complete, options = {}) {
+  const agent = grokBuildAgent({
+    complete,
+    tools: "mcp",
+    mcp: options.mcp ?? knoloMcpBridge(),
+    sessionId: options.sessionId ?? "example-grok-build",
+  });
+  const issued = await issueSpawn({
+    parent: agent,
+    task: sharedTask(),
+    authority: {
+      capabilities: ["ledger.read"],
+      tools: [],
+      namespaces: ["examples.ledger"],
+      maxSteps: 8,
+      maxCostMicros: 1000,
+    },
+    pack: {
+      capabilities: ["ledger.read", "payments.send"],
+      tools: ["search_ledger"],
+      namespaces: ["examples.ledger", "examples.payments"],
+      maxSteps: 16,
+      maxCostMicros: 5000,
+    },
+    evidence: sharedEvidence(),
+    skills: sharedSkills(),
+    returnContract: "spawn.return.v1",
+    expiryMs: 1893456000000,
+    runId: options.runId ?? "example-grok-build",
+  });
+  const result = await agent.invoke(issued.envelope.task.inputs, {
+    runId: options.runId ?? "example-grok-build",
+    task: issued.envelope.task,
+    envelope: issued.context,
+  });
+  const receipt = await closeSpawn(issued.envelope, result.output, {
+    status: result.status,
+    toolCalls: result.toolCalls ?? [],
+  });
+  return { issued, result, receipt };
 }
 
 export { KNOLO_MCP_TOOLS };

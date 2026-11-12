@@ -23,5 +23,6 @@ pub use graph::*;
 pub use harness::{
     compute_harness_dependency_root, ConstraintV1, EvaluationCheckV1, EvaluationReceiptV1,
     HarnessBudgetV1, HarnessDependencyRootV1, HarnessRunReceiptV1, InvocationStatusV1,
-    PackDependencyRoleV1, PackDependencyV1, TaskV1, DEPENDENCY_ROOT_LABEL,
+    PackDependencyRoleV1, PackDependencyV1, SpawnAuthorityV1, SpawnEnvelopeV1, SpawnParentV1,
+    SpawnReceiptV1, TaskV1, DEPENDENCY_ROOT_LABEL,
 };

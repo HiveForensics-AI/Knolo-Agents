@@ -1,21 +1,33 @@
-# Grok Build example (L0 / L1)
+# Grok Build example (parent agent)
 
-Wrap a **host-owned Grok Build session**. Knolo compiles the task, evidence, and
-local skills; Grok Build never becomes a dependency of `@knolo/agents`. This
-replaces the Claude example: the same Task / Context / Skill / Registry
-contracts, with Grok Build as the vendor session.
+Grok Build stays the parent. Knolo issues a spawn envelope, the host-owned
+session answers from that brief, and Knolo closes the envelope into a receipt.
+Grok Build is not a dependency of `@knolo/agents`. The recorded fixture never
+calls the network.
 
 ```ts
-const harness = await createHarness({
-  agent: grokBuildAgent({ complete, tools: "mcp", mcp: knoloMcpBridge() }),
+const agent = grokBuildAgent({ complete, tools: "mcp", mcp: knoloMcpBridge() });
+const issued = await issueSpawn({
+  parent: agent,
   task,
+  authority,
+  pack,
   evidence,
   skills: { resolution: "local", packs: [ledgerReview] },
-  authority: { capabilities: ["ledger.read"] },
+});
+const result = await agent.invoke(undefined, {
+  runId: "example-grok-build",
+  task: issued.envelope.task,
+  envelope: issued.context,
+});
+const receipt = await closeSpawn(issued.envelope, result.output, {
+  status: result.status,
+  toolCalls: result.toolCalls,
 });
 ```
 
-Default `run.mjs` uses a recorded Grok Build turn. Live smoke:
+`issueSpawn` does not call `complete()`. The parent does. Default `run.mjs`
+uses a recorded Grok Build turn. Live smoke:
 
 ```bash
 node examples/adapters/grok-build/run.mjs

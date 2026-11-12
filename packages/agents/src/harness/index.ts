@@ -1,7 +1,9 @@
 export { digestRoot, canonicalJson, sha256Bytes, sha256Hex } from "./hash.js";
 export { freezeDependencyRoot, evaluateInvocation, emptyEnvelope, assertAdapterSupportsTask } from "./lifecycle.js";
 export { createHarness, HarnessSession } from "./session.js";
-export type { CreateHarnessOptions, HarnessRun } from "./session.js";
+export type { CreateHarnessOptions, HarnessRun, PreparedHarness } from "./session.js";
+export { assertSpawnAuthority, closeSpawn, handoffFromSpawn, issueSpawn, parseSpawnEnvelope, verifySpawnEnvelope } from "./spawn.js";
+export type { CloseSpawnOptions, IssueSpawnOptions, IssuedSpawn, SpawnAuthorityV1, SpawnEnvelopeV1, SpawnReceiptV1 } from "./spawn.js";
 export { stringifyOutput, validateTask } from "./task.js";
 export { HarnessError } from "./types.js";
 export type {

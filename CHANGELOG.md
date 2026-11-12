@@ -10,6 +10,16 @@ called out explicitly and may evolve without a crates.io release.
 
 ## [Unreleased]
 
+### Added
+
+- Knolo Spawn: `issueSpawn`, `closeSpawn`, `verifySpawnEnvelope`,
+  `handoffFromSpawn`, and `assertSpawnAuthority` on `@knolo/agents`.
+  `SpawnEnvelopeV1` and `SpawnReceiptV1` validate in `knolo-agent-core`.
+  MCP tools `knolo.spawn` and `knolo.close`. `handoffFromSpawn` projects a
+  verified envelope onto a handoff and does not start a worker.
+- The Grok Build example is a parent that issues a spawn, answers from the
+  brief, and closes the receipt. Recorded fixtures stay offline.
+
 ## [0.3.0] - 2026-09-07
 
 `@knolo/agents` only. `knolo-agent` and `knolo-agent-core` remain **0.2.2**.

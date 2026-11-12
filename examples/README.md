@@ -1,6 +1,10 @@
 # Examples
 
-`typescript/complete.ts` demonstrates a typed graph, a policy-gated tool boundary,
+`adapters/grok-build/` is the spawn reference. A host-owned Grok Build session
+issues an envelope, answers from the brief, and closes a receipt. The recorded
+fixture does not call the network.
+
+`typescript/complete.ts` demonstrates an optional deterministic worker: a typed graph, a policy-gated tool boundary,
 native retrieval evidence, injected Cortex context, an approved ClaimGraph proposal,
 a narrowed multi-agent handoff, HITL validation, checkpoint/event resume concepts,
 and deterministic replay. The runnable Rust examples live in

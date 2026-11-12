@@ -1,7 +1,6 @@
-import { createHarness, knoloMcpBridge } from "../../../packages/agents/dist/index.js";
-import { sharedHarnessOptions, vendorSmokeEnabled } from "../shared/contracts.mjs";
+import { vendorSmokeEnabled } from "../shared/contracts.mjs";
 import { loadVendorFixture, recordedComplete } from "../shared/recorded.mjs";
-import { grokBuildAgent } from "./grok-build-agent.mjs";
+import { runGrokBuildParent } from "./grok-build-agent.mjs";
 
 const live = vendorSmokeEnabled("grok-build") || vendorSmokeEnabled("grok");
 if (live && !process.env.XAI_API_KEY) {
@@ -10,18 +9,16 @@ if (live && !process.env.XAI_API_KEY) {
 }
 
 const complete = live ? liveGrokBuildComplete(process.env.XAI_API_KEY) : recordedComplete(loadVendorFixture("grok-chat-v1.json").turns);
-const session = await createHarness(sharedHarnessOptions(
-  grokBuildAgent({ complete, tools: "mcp", mcp: knoloMcpBridge(), sessionId: "example-grok-build" }),
-  { runId: "example-grok-build" },
-));
-const { receipt, result } = await session.run();
+const { issued, result, receipt } = await runGrokBuildParent(complete);
 console.log(JSON.stringify({
   adapter: "grok-build",
   live,
   status: result.status,
   finalStatus: receipt.finalStatus,
+  passed: receipt.evaluation.passed,
   toolCalls: result.toolCalls ?? [],
-  dependencyRoot: receipt.harnessDependencyRoot,
+  envelopeRoot: issued.envelope.envelopeRoot,
+  dependencyRoot: issued.envelope.dependencyRoot,
 }, null, 2));
 
 function liveGrokBuildComplete(apiKey) {
