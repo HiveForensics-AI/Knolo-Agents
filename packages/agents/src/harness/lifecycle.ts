@@ -43,16 +43,16 @@ export function evaluateInvocation(task: TaskV1, status: InvocationStatusV1, out
   const matched = task.successCriteria.filter(criterion => contains(text, criterion));
   const prohibited = task.prohibitedActions ?? [];
   const violations = prohibited.filter(action => contains(text, action) || toolCalls.includes(action));
-  const passed = violations.length === 0 && status !== "failed";
+  const checks: EvaluationReceiptV1["checks"] = [
+    { phase: "contract", id: "policy", passed: violations.length === 0, detail: violations.join(",") || "ok" },
+    { phase: "task", id: "successCriteria", passed: matched.length === task.successCriteria.length, detail: `${matched.length}/${task.successCriteria.length}` },
+  ];
   return {
     status: violations.length ? "failed" : status,
     successCriteriaMatched: matched,
     prohibitedViolations: violations,
-    passed,
-    checks: [
-      { phase: "contract", id: "policy", passed: violations.length === 0, detail: violations.join(",") || "ok" },
-      { phase: "task", id: "successCriteria", passed: matched.length === task.successCriteria.length, detail: `${matched.length}/${task.successCriteria.length}` },
-    ],
+    passed: checks.every(check => check.passed) && status !== "failed",
+    checks,
     judge: null,
   };
 }

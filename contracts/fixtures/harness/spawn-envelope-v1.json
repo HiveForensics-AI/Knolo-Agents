@@ -1,0 +1,48 @@
+{
+  "version": 1,
+  "parent": {
+    "version": 1,
+    "id": "parent",
+    "level": "L1"
+  },
+  "task": {
+    "id": "dummy-investigate",
+    "objective": "Investigate these transactions for potential fraud.",
+    "successCriteria": [
+      "identify suspicious transactions",
+      "cite supporting evidence",
+      "do not perform irreversible actions"
+    ],
+    "prohibitedActions": [
+      "wire_transfer"
+    ],
+    "budget": {
+      "maxSteps": 8,
+      "timeoutMs": 5000
+    }
+  },
+  "taskRoot": "task:d34beef9fc6d40a1cf13cd6393114876ba2a3a10f3efa416b56b9e38724900a0",
+  "authority": {
+    "capabilities": [
+      "ledger.read"
+    ],
+    "tools": [],
+    "namespaces": [
+      "examples.ledger"
+    ],
+    "maxSteps": 8,
+    "maxCostMicros": 1000
+  },
+  "contextRoot": "context:d86d3b9e47a5a1326e05ace03187beac9e22b5d885394fccd0cd9c315bbd216f",
+  "dependencyRoot": "knolo.harness.dependencies.v1:11641bf86bd3389e2421003fdd958d9357f1ceb0d7b127897ad247a45a8f1ae4",
+  "skillSelectionReceipt": "skill-selection:4ada994e68de6f801f7f387ef8364dfbad1295bc6bf41c45559c8bc0a32827e0",
+  "evidenceReceipts": [
+    "context-selection:9ae7d2102ee5baac66ac954a26dc90711a401ff8ffbd892652c28ccfee01d038"
+  ],
+  "knowledgeStateRoots": [
+    "ledger-pack"
+  ],
+  "returnContract": "spawn.return.v1",
+  "expiryMs": 1893456000000,
+  "envelopeRoot": "spawn:b8d531d3040e3be66b240f7a6da499b57fd89b841fca78d2d6724ae2696938c4"
+}

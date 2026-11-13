@@ -32,7 +32,25 @@ examples, evaluation harnesses, and pre-1.0 API freeze work.
 
 ### P0 — Highest leverage
 
+#### Knolo Spawn envelope and receipt
+
+- **What:** Parent agents issue an inert `SpawnEnvelopeV1` and close it into a
+  `SpawnReceiptV1`. The envelope narrows authority, pins the context hash, and
+  does not call a model. `knolo.spawn` and `knolo.close` are the MCP surface.
+  Graphs, WASM, and ICP remain optional workers.
+- **Why it matters:** Knolo should be the delegation contract other agents call,
+  not another framework that owns the model loop.
+- **Rough acceptance criteria:**
+  - TypeScript `issueSpawn` / `closeSpawn` and Rust `SpawnEnvelopeV1::parse`
+    agree on `contracts/fixtures/harness/spawn-envelope-v1.json`.
+  - Extra capability, namespace, tool, step budget, or cost budget fails closed.
+  - A prohibited tool call refuses the close.
+  - The Grok Build example runs on the recorded fixture.
+
 #### Stronger TypeScript deterministic replay (full state snapshots)
+
+Worker follow-on. The product front door is Knolo Spawn. This item stays
+because a deterministic worker still needs state-level replay.
 
 - **What:** Today `Agent.replay` validates contiguous event sequences, and
   `replayDeterministic` re-executes and compares the control-plane event trace
@@ -55,6 +73,9 @@ examples, evaluation harnesses, and pre-1.0 API freeze work.
 
 #### Expose run budgets through shared pack / core contracts
 
+Worker follow-on. Spawn already carries `maxSteps` and `maxCostMicros` on the
+envelope. This item is the remaining pack-file ownership for graph workers.
+
 - **What:** Graph definitions already carry `ExecutionLimitsV1`
   (`max_steps`, `max_tokens`, `max_cost_micros`, `timeout_ms`), and both engines
   enforce them. Native `.knolo` files may declare `budget.max_steps` and
@@ -76,6 +97,8 @@ examples, evaluation harnesses, and pre-1.0 API freeze work.
     schema ownership lives upstream of this repo.
 
 #### Full standalone WASM execution path
+
+Worker follow-on. WASM is one way to execute a spawn, not the adoption path.
 
 - **What:** `knolo-agent-wasm` is a versioned JSON protocol adapter. It accepts
   shared graphs and supports **inspect**; run/resume responses currently fail

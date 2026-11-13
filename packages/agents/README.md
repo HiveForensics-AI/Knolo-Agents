@@ -1,7 +1,8 @@
 # @knolo/agents
 
-`@knolo/agents` provides typed graph builders and explicit TypeScript/WASM
-execution adapters for Knolo Agents.
+`@knolo/agents` issues Knolo Spawn envelopes for parent agents, and provides
+typed graph builders and explicit TypeScript/WASM execution adapters. A spawn
+does not call a model. The parent runs the brief and closes the receipt.
 
 ## Install
 
@@ -13,7 +14,32 @@ pnpm add @knolo/agents
 inject Cortex, ClaimGraph, or Knowledge Image capabilities; this package does
 not bundle, encode VQF, or implement that storage layer.
 
+## Spawn
+
+```ts
+import { closeSpawn, issueSpawn } from "@knolo/agents";
+
+const issued = await issueSpawn({
+  parent: { version: 1, id: "parent", level: "L1" },
+  task: {
+    objective: "Investigate these transactions for potential fraud.",
+    successCriteria: ["identify suspicious transactions"],
+    prohibitedActions: ["wire_transfer"],
+    budget: { maxSteps: 4 },
+  },
+  authority: { capabilities: ["ledger.read"], tools: [], namespaces: [], maxSteps: 8, maxCostMicros: 1000 },
+  pack: { capabilities: ["ledger.read"], tools: [], namespaces: [], maxSteps: 8, maxCostMicros: 1000 },
+});
+
+const receipt = await closeSpawn(issued.envelope, "identify suspicious transactions", { toolCalls: [] });
+```
+
+The issued authority is the intersection of `authority` and `pack`. A wider
+projection throws. See [docs/spawn.md](../../docs/spawn.md).
+
 ## Usage
+
+Graph builders remain available for a deterministic worker.
 
 ```ts
 import { Agent, defineAgent, entry, node, stateSchema, terminal, transition } from "@knolo/agents";
@@ -63,6 +89,6 @@ pnpm --filter @knolo/agents test
 
 ## Status and license
 
-This is the `0.3.0` release of the TypeScript surface; APIs may evolve before
+This is the `0.4.0` release of the TypeScript surface; APIs may evolve before
 1.0. The optional `@knolo/core` peer is `^5.5.0`. The package is licensed under
 Apache License 2.0. See [LICENSE](LICENSE).

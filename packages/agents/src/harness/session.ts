@@ -35,6 +35,32 @@ import type {
 } from "./types.js";
 import { HarnessError } from "./types.js";
 
+export interface PreparedHarness {
+  readonly runId: string;
+  readonly task: TaskV1;
+  readonly envelope: ContextEnvelopeV1;
+  readonly selectionRoot: string;
+  readonly skills: SkillSelectionReceiptV1 | null;
+  readonly dependencyRoot: string;
+  readonly knowledgeStateRoots: readonly string[];
+}
+
+interface CompiledRun {
+  readonly runId: string;
+  readonly adapter: AgentAdapter;
+  readonly task: TaskV1;
+  readonly knowledge: readonly string[];
+  readonly activation: DependencyActivation;
+  readonly resolvedSkills: { items?: SkillItemV1[]; receipt: SkillSelectionReceiptV1 | null };
+  readonly acquired: { receipt: SkillAcquisitionReceiptV1; packs: readonly CapabilityMetadataV1[] };
+  readonly frozen: HarnessDependencyRootV1;
+  readonly dependencyRoot: string;
+  readonly middleware: readonly Middleware[];
+  readonly hookCtx: MiddlewareContext;
+  readonly selection: ContextSelectionReceiptV1;
+  readonly selectionRoot: string;
+}
+
 export interface CreateHarnessOptions {
   readonly agent: AgentAdapter;
   readonly task: TaskV1;
@@ -121,7 +147,21 @@ export class HarnessSession {
     return this.options.learner;
   }
 
-  async run(input?: unknown): Promise<HarnessRun> {
+  /** Compile the task, skills, and context. Does not invoke the adapter. */
+  async prepare(): Promise<PreparedHarness> {
+    const compiled = await this.compileRun();
+    return {
+      runId: compiled.runId,
+      task: compiled.task,
+      envelope: compiled.hookCtx.envelope,
+      selectionRoot: compiled.selectionRoot,
+      skills: compiled.resolvedSkills.receipt,
+      dependencyRoot: compiled.dependencyRoot,
+      knowledgeStateRoots: knowledgeStateRoots(compiled.knowledge, compiled.hookCtx.envelope.evidence),
+    };
+  }
+
+  private async compileRun(): Promise<CompiledRun> {
     const runId = this.options.runId ?? `harness-${await digestRoot("run", { at: (this.options.clock ?? Date.now)() })}`;
     const adapter = this.options.agent;
     const task = this.options.task;
@@ -157,7 +197,7 @@ export class HarnessSession {
 
     await runHooks(middleware, "beforeRun", hookCtx);
     await runHooks(middleware, "beforeContext", hookCtx);
-    const compiled = await compileContext({
+    const context = await compileContext({
       task,
       capabilities: hookCtx.envelope.capabilities,
       budget,
@@ -173,11 +213,30 @@ export class HarnessSession {
       semanticRerank: this.options.semanticRerank,
       semanticRerankModel: this.options.semanticRerankModel,
     });
-    hookCtx.envelope = compiled.envelope;
-    await runHooks(middleware, "onEvidence", hookCtx, compiled.envelope.evidence);
-    await runHooks(middleware, "onSkillCandidates", hookCtx, resolvedSkills.receipt?.candidates ?? compiled.envelope.skills);
-    await runHooks(middleware, "onSkillSelected", hookCtx, resolvedSkills.receipt?.selected ?? compiled.envelope.skills);
+    hookCtx.envelope = context.envelope;
+    await runHooks(middleware, "onEvidence", hookCtx, context.envelope.evidence);
+    await runHooks(middleware, "onSkillCandidates", hookCtx, resolvedSkills.receipt?.candidates ?? context.envelope.skills);
+    await runHooks(middleware, "onSkillSelected", hookCtx, resolvedSkills.receipt?.selected ?? context.envelope.skills);
+    return {
+      runId,
+      adapter,
+      task,
+      knowledge,
+      activation,
+      resolvedSkills,
+      acquired,
+      frozen,
+      dependencyRoot,
+      middleware,
+      hookCtx,
+      selection: context.selection,
+      selectionRoot: context.selectionRoot,
+    };
+  }
 
+  async run(input?: unknown): Promise<HarnessRun> {
+    const compiled = await this.compileRun();
+    const { runId, adapter, task, knowledge, activation, resolvedSkills, acquired, frozen, dependencyRoot, middleware, hookCtx, selection, selectionRoot } = compiled;
     const recoveryPolicy = parseRecoveryPolicy(this.options.recovery);
     const invoked = await invokeWithRecovery(adapter, input ?? task.inputs, hookCtx, middleware, this.options.signal, recoveryPolicy);
     const result = invoked.result;
@@ -202,13 +261,13 @@ export class HarnessSession {
       agentDescriptorHash: await digestRoot("agent", descriptor),
       taskRoot: await digestRoot("task", task),
       inputRoot: await digestRoot("input", input ?? task.inputs ?? null),
-      knowledgeStateRoots: knowledgeStateRoots(knowledge, compiled.envelope.evidence),
+      knowledgeStateRoots: knowledgeStateRoots(knowledge, hookCtx.envelope.evidence),
       harnessDependencyRoot: dependencyRoot,
       authorityRoot: await digestRoot("authority", this.options.authority ?? null),
       skillSelectionReceipt: resolvedSkills.receipt
         ? await digestRoot("skill-selection", resolvedSkills.receipt)
-        : compiled.envelope.skills.length
-          ? await digestRoot("skills", compiled.envelope.skills)
+        : hookCtx.envelope.skills.length
+          ? await digestRoot("skills", hookCtx.envelope.skills)
           : null,
       evidenceReceipts: [compiled.selectionRoot],
       toolReceipts: result.toolCalls ?? toolReceipts,
@@ -227,7 +286,7 @@ export class HarnessSession {
         successCriteriaMatched: evaluation.successCriteriaMatched,
         prohibitedViolations: evaluation.prohibitedViolations,
         skillIds: resolvedSkills.receipt?.selected.map(item => item.id) ?? [],
-        evidenceIds: compiled.selection.selected.filter(item => item.kind === "evidence").map(item => item.id),
+        evidenceIds: selection.selected.filter(item => item.kind === "evidence").map(item => item.id),
         dependencyRoot,
       })
       : emptyReceipt();
@@ -246,7 +305,7 @@ export class HarnessSession {
       result: { ...result, status: receipt.finalStatus },
       receipt,
       envelope: hookCtx.envelope,
-      selection: compiled.selection,
+      selection,
       skills: resolvedSkills.receipt,
       acquisition: resolvedSkills.receipt ? acquired.receipt : null,
       experience: this.options.learner ? experience : null,

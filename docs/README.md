@@ -1,5 +1,6 @@
 # Documentation index
 
+- [Knolo Spawn](spawn.md)
 - [Architecture](architecture/README.md), [state transactions](architecture/state-transactions.md), and [graph validation](architecture/graph-validation.md)
 - [Packs](packs.md), [policy](policy-enforcement.md), and [tools](tools.md)
 - [Retrieval](retrieval.md) and the [`@knolo/core` boundary](core-boundary.md)

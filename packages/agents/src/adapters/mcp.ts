@@ -1,7 +1,9 @@
 import type { JsonValue } from "../contracts/index.js";
 import { evaluateInvocation } from "../harness/lifecycle.js";
+import { closeSpawn, issueSpawn, type SpawnAuthorityV1, type SpawnEnvelopeV1 } from "../harness/spawn.js";
 import { stringifyOutput } from "../harness/task.js";
-import { HarnessError, type HarnessContextV1, type InvocationStatusV1 } from "../harness/types.js";
+import { HarnessError, type AgentDescriptorV1, type HarnessContextV1, type InvocationStatusV1, type TaskV1 } from "../harness/types.js";
+import type { CreateHarnessOptions } from "../harness/session.js";
 
 export const MCP_PROTOCOL_VERSION = "2024-11-05";
 
@@ -9,6 +11,8 @@ export const KNOLO_MCP_TOOLS = {
   retrieve: "knolo.retrieve",
   resolveSkills: "knolo.resolve_skills",
   evaluate: "knolo.evaluate",
+  spawn: "knolo.spawn",
+  close: "knolo.close",
 } as const;
 
 export interface McpToolDefinitionV1 {
@@ -71,6 +75,14 @@ export interface KnoloMcpBridgeOptions {
   readonly extraHandlers?: Readonly<Record<string, McpToolHandler>>;
   readonly serverName?: string;
   readonly serverVersion?: string;
+  readonly spawnParent?: AgentDescriptorV1;
+  readonly spawnAuthority?: SpawnAuthorityV1;
+  readonly spawnPack?: SpawnAuthorityV1;
+  readonly spawnEvidence?: CreateHarnessOptions["evidence"];
+  readonly spawnSkills?: CreateHarnessOptions["skills"];
+  readonly spawnKnowledge?: readonly string[];
+  readonly returnContract?: string;
+  readonly clock?: () => number;
 }
 
 const RETRIEVE_SCHEMA: JsonValue = {
@@ -93,12 +105,34 @@ const EVALUATE_SCHEMA: JsonValue = {
   },
 };
 
+const SPAWN_SCHEMA: JsonValue = {
+  type: "object",
+  required: ["task"],
+  properties: {
+    task: { type: "object", description: "TaskV1 to delegate. The bridge parent authority and pack bound the grant." },
+    projection: { type: "object", description: "Optional authority projection. Must be a narrowing of the parent and the pack." },
+  },
+};
+
+const CLOSE_SCHEMA: JsonValue = {
+  type: "object",
+  required: ["envelope", "output"],
+  properties: {
+    envelope: { type: "object", description: "Spawn envelope returned by knolo.spawn" },
+    output: { description: "Worker output to bind to the envelope" },
+    status: { type: "string", enum: ["succeeded", "partial", "failed", "suspended"] },
+    toolCalls: { type: "array", items: { type: "string" } },
+  },
+};
+
 /** Generic MCP tool/resource surface. Vendor SDKs stay in examples. */
 export function knoloMcpBridge(options: KnoloMcpBridgeOptions = {}): McpToolServer {
   const tools = new Map<string, { definition: McpToolDefinitionV1; handler: McpToolHandler }>();
   register(tools, KNOLO_MCP_TOOLS.retrieve, "Retrieve compiled Knolo evidence for the current task.", RETRIEVE_SCHEMA, options.retrieve ?? defaultRetrieve);
   register(tools, KNOLO_MCP_TOOLS.resolveSkills, "Return selected Knolo skills for the current task.", SKILLS_SCHEMA, options.resolveSkills ?? defaultResolveSkills);
   register(tools, KNOLO_MCP_TOOLS.evaluate, "Run deterministic Knolo evaluation against a proposed output.", EVALUATE_SCHEMA, options.evaluate ?? defaultEvaluate);
+  register(tools, KNOLO_MCP_TOOLS.spawn, "Issue an inert spawn envelope for a parent-supplied task. Does not call a model.", SPAWN_SCHEMA, options.extraHandlers?.[KNOLO_MCP_TOOLS.spawn] ?? ((args, ctx) => defaultSpawn(args, ctx, options)));
+  register(tools, KNOLO_MCP_TOOLS.close, "Close a spawn envelope against a worker output and return a receipt.", CLOSE_SCHEMA, options.extraHandlers?.[KNOLO_MCP_TOOLS.close] ?? ((args, ctx) => defaultClose(args, ctx, options)));
   for (const extra of options.extraTools ?? []) {
     const handler = options.extraHandlers?.[extra.name];
     if (!handler) throw new HarnessError(`mcp extra tool is missing a handler: ${extra.name}`);
@@ -234,6 +268,44 @@ function defaultEvaluate(args: JsonValue, ctx?: HarnessContextV1): JsonValue {
   const status = parseStatus(body.status);
   const toolCalls = Array.isArray(body.toolCalls) ? body.toolCalls.map(item => String(item)) : [];
   const receipt = evaluateInvocation(ctx.task, status, body.output, toolCalls);
+  return receipt as unknown as JsonValue;
+}
+
+async function defaultSpawn(args: JsonValue, ctx: HarnessContextV1 | undefined, options: KnoloMcpBridgeOptions): Promise<JsonValue> {
+  if (!options.spawnParent || !options.spawnAuthority || !options.spawnPack) {
+    throw new HarnessError("knolo.spawn requires parent, authority, and pack on the bridge");
+  }
+  const body = record(args);
+  const task = body.task ?? ctx?.task;
+  if (!task || typeof task !== "object" || Array.isArray(task)) throw new HarnessError("invalid params: knolo.spawn requires task");
+  const projection = body.projection;
+  const issued = await issueSpawn({
+    parent: options.spawnParent,
+    task: task as TaskV1,
+    authority: options.spawnAuthority,
+    pack: options.spawnPack,
+    ...(projection && typeof projection === "object" && !Array.isArray(projection) ? { projection: projection as unknown as SpawnAuthorityV1 } : {}),
+    evidence: options.spawnEvidence,
+    skills: options.spawnSkills,
+    knowledge: options.spawnKnowledge,
+    returnContract: options.returnContract,
+    clock: options.clock,
+  });
+  return { envelope: issued.envelope as unknown as JsonValue, context: issued.context as unknown as JsonValue };
+}
+
+async function defaultClose(args: JsonValue, _ctx: HarnessContextV1 | undefined, options: KnoloMcpBridgeOptions): Promise<JsonValue> {
+  const body = record(args);
+  if (!body.envelope || typeof body.envelope !== "object" || Array.isArray(body.envelope)) {
+    throw new HarnessError("invalid params: knolo.close requires envelope");
+  }
+  if (!("output" in body)) throw new HarnessError("invalid params: knolo.close requires output");
+  const toolCalls = Array.isArray(body.toolCalls) ? body.toolCalls.map(item => String(item)) : [];
+  const receipt = await closeSpawn(body.envelope as unknown as SpawnEnvelopeV1, body.output, {
+    ...(body.status !== undefined ? { status: body.status as InvocationStatusV1 } : {}),
+    toolCalls,
+    clock: options.clock,
+  });
   return receipt as unknown as JsonValue;
 }
 

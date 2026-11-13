@@ -1,0 +1,42 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://knolo.dev/schemas/spawn-receipt-v1.schema.json",
+  "title": "SpawnReceiptV1",
+  "description": "Closes one spawn envelope. A passing receipt means the declared checks passed. It does not mean the output is true.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "version",
+    "envelopeRoot",
+    "outputRoot",
+    "evaluation",
+    "skillSelectionReceipt",
+    "evidenceReceipts",
+    "knowledgeStateRoots",
+    "finalStatus",
+    "output"
+  ],
+  "properties": {
+    "version": { "const": 1 },
+    "envelopeRoot": { "type": "string", "pattern": "^spawn:" },
+    "outputRoot": { "type": "string", "pattern": "^output:" },
+    "evaluation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["status", "successCriteriaMatched", "prohibitedViolations", "passed", "checks", "judge"],
+      "properties": {
+        "status": { "enum": ["succeeded", "partial", "failed", "suspended"] },
+        "successCriteriaMatched": { "type": "array", "items": { "type": "string" } },
+        "prohibitedViolations": { "type": "array", "items": { "type": "string" } },
+        "passed": { "type": "boolean" },
+        "checks": { "type": "array" },
+        "judge": { "type": "null" }
+      }
+    },
+    "skillSelectionReceipt": { "type": ["string", "null"] },
+    "evidenceReceipts": { "type": "array", "items": { "type": "string" } },
+    "knowledgeStateRoots": { "type": "array", "items": { "type": "string" } },
+    "finalStatus": { "enum": ["succeeded", "partial", "failed", "suspended"] },
+    "output": true
+  }
+}

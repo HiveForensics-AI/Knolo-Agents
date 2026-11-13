@@ -1,0 +1,58 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://knolo.dev/schemas/spawn-envelope-v1.schema.json",
+  "title": "SpawnEnvelopeV1",
+  "description": "Inert delegation grant. It does not call a model, carry credentials, or start a worker.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "version",
+    "parent",
+    "task",
+    "taskRoot",
+    "authority",
+    "contextRoot",
+    "dependencyRoot",
+    "skillSelectionReceipt",
+    "evidenceReceipts",
+    "knowledgeStateRoots",
+    "returnContract",
+    "envelopeRoot"
+  ],
+  "properties": {
+    "version": { "const": 1 },
+    "parent": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["version", "id", "level"],
+      "properties": {
+        "version": { "const": 1 },
+        "id": { "type": "string", "minLength": 1, "maxLength": 128 },
+        "name": { "type": "string" },
+        "level": { "enum": ["L0", "L1", "L2", "L3", "platform"] }
+      }
+    },
+    "task": { "$ref": "https://knolo.dev/schemas/task-v1.schema.json" },
+    "taskRoot": { "type": "string", "pattern": "^task:" },
+    "authority": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["capabilities", "tools", "namespaces", "maxSteps", "maxCostMicros"],
+      "properties": {
+        "capabilities": { "type": "array", "items": { "type": "string", "minLength": 1 } },
+        "tools": { "type": "array", "items": { "type": "string", "minLength": 1 } },
+        "namespaces": { "type": "array", "items": { "type": "string", "minLength": 1 } },
+        "maxSteps": { "type": "integer", "minimum": 1 },
+        "maxCostMicros": { "type": "integer", "minimum": 1 }
+      }
+    },
+    "contextRoot": { "type": "string", "pattern": "^context:" },
+    "dependencyRoot": { "type": "string", "minLength": 1 },
+    "skillSelectionReceipt": { "type": ["string", "null"] },
+    "evidenceReceipts": { "type": "array", "items": { "type": "string" } },
+    "knowledgeStateRoots": { "type": "array", "items": { "type": "string" } },
+    "returnContract": { "type": "string", "minLength": 1 },
+    "expiryMs": { "type": "integer", "minimum": 1 },
+    "envelopeRoot": { "type": "string", "pattern": "^spawn:" }
+  }
+}

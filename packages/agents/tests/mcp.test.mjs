@@ -36,14 +36,20 @@ function ctx(overrides = {}) {
   };
 }
 
-test("MCP initialize and tools/list expose retrieve, skills, and evaluate", async () => {
+test("MCP initialize and tools/list expose retrieve, skills, evaluate, spawn, and close", async () => {
   const server = knoloMcpBridge({ ctx: ctx() });
   const init = await server.handle({ jsonrpc: "2.0", id: 1, method: "initialize", params: {} });
   assert.equal(init.result.protocolVersion, MCP_PROTOCOL_VERSION);
   assert.equal(init.result.serverInfo.name, "knolo-mcp-bridge");
   const listed = await server.handle({ jsonrpc: "2.0", id: 2, method: "tools/list" });
   const names = listed.result.tools.map(tool => tool.name);
-  assert.deepEqual(names, [KNOLO_MCP_TOOLS.retrieve, KNOLO_MCP_TOOLS.resolveSkills, KNOLO_MCP_TOOLS.evaluate]);
+  assert.deepEqual(names, [
+    KNOLO_MCP_TOOLS.retrieve,
+    KNOLO_MCP_TOOLS.resolveSkills,
+    KNOLO_MCP_TOOLS.evaluate,
+    KNOLO_MCP_TOOLS.spawn,
+    KNOLO_MCP_TOOLS.close,
+  ]);
   const ping = await server.handle({ jsonrpc: "2.0", method: "notifications/initialized" });
   assert.equal(ping, null);
 });
@@ -107,6 +113,62 @@ test("MCP JSON-RPC rejects unknown methods and extra tools without handlers", as
     () => knoloMcpBridge({ extraTools: [{ name: "custom.search", description: "x", inputSchema: { type: "object" } }] }),
     /missing a handler/,
   );
+});
+
+test("MCP spawn issues an envelope and close refuses a prohibited tool", async () => {
+  const ceilings = {
+    capabilities: ["ledger.read"],
+    tools: [],
+    namespaces: [],
+    maxSteps: 8,
+    maxCostMicros: 1000,
+  };
+  const server = knoloMcpBridge({
+    spawnParent: { version: 1, id: "parent", level: "L1" },
+    spawnAuthority: ceilings,
+    spawnPack: ceilings,
+  });
+  const issued = await server.callTool(KNOLO_MCP_TOOLS.spawn, { task });
+  assert.equal(issued.isError, undefined);
+  assert.equal(issued.structured.envelope.parent.id, "parent");
+  assert.equal(issued.structured.envelope.authority.maxSteps, 8);
+  const closed = await server.callTool(KNOLO_MCP_TOOLS.close, {
+    envelope: issued.structured.envelope,
+    output: "identify suspicious transactions and cite supporting evidence",
+  });
+  assert.equal(closed.structured.evaluation.passed, true);
+  assert.equal(closed.structured.finalStatus, "succeeded");
+  const unmet = await server.callTool(KNOLO_MCP_TOOLS.close, {
+    envelope: issued.structured.envelope,
+    output: "not the criteria",
+    status: "succeeded",
+  });
+  assert.equal(unmet.structured.evaluation.passed, false);
+  assert.equal(unmet.structured.finalStatus, "partial");
+  const invalid = await server.callTool(KNOLO_MCP_TOOLS.close, {
+    envelope: issued.structured.envelope,
+    output: "identify suspicious transactions and cite supporting evidence",
+    status: "complete",
+  });
+  assert.equal(invalid.isError, true);
+  assert.match(invalid.content[0].text, /status must be succeeded/);
+  const refused = await server.callTool(KNOLO_MCP_TOOLS.close, {
+    envelope: issued.structured.envelope,
+    output: "completed via wire_transfer",
+    toolCalls: ["wire_transfer"],
+  });
+  assert.equal(refused.isError, true);
+  assert.match(refused.content[0].text, /prohibited/);
+  const widened = await server.callTool(KNOLO_MCP_TOOLS.spawn, {
+    task,
+    projection: { capabilities: ["payments.send"], tools: [], namespaces: [], maxSteps: 8, maxCostMicros: 1000 },
+  });
+  assert.equal(widened.isError, true);
+  assert.match(widened.content[0].text, /escalation/);
+  const bare = knoloMcpBridge();
+  const missing = await bare.callTool(KNOLO_MCP_TOOLS.spawn, { task });
+  assert.equal(missing.isError, true);
+  assert.match(missing.content[0].text, /parent, authority, and pack/);
 });
 
 test("mcp adapter does not import icp", () => {

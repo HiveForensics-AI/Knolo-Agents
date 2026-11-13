@@ -13,6 +13,8 @@ const pairs = [
   ["task-dummy-v1.json", "task-v1.schema.json"],
   ["dependency-root-v1.json", "harness-dependency-root-v1.schema.json"],
   ["run-receipt-v1.json", "harness-run-receipt-v1.schema.json"],
+  ["spawn-envelope-v1.json", "spawn-envelope-v1.schema.json"],
+  ["spawn-receipt-v1.json", "spawn-receipt-v1.schema.json"],
   ["registry/manifest-v1.json", "pack-manifest-v1.schema.json"],
   ["registry/knolo.lock.json", "knolo-lockfile-v1.schema.json"],
   ["acs/harness-report-v1.json", "acs-harness-report-v1.schema.json"],

@@ -1,14 +1,16 @@
 # Knolo Agents
 
-Knolo Agents is a **Rust runtime** and **TypeScript SDK** for building reliable,
-inspectable AI agents. An agent run is a deterministic, reviewable control
-plane: typed graphs describe execution, packs grant authority, hosts provide
-effects, and ordered events make replay and auditing possible.
+Knolo Spawn is how a parent agent delegates one bounded task. The parent keeps
+its model, its tools, and its credentials. Knolo issues an inert envelope —
+task, narrowed authority, pinned skills and knowledge, budget, return contract —
+and closes the worker's output into a receipt. A passing receipt means the
+declared checks passed. It does not mean the answer is true.
 
-This repository is intentionally small and independently usable. Runtime
-behavior lives in Rust; TypeScript exposes ergonomic builders and a limited
-portable engine. Provider SDKs, storage backends, and `@knolo/core`
-implementations stay outside this workspace.
+This repository is the Rust and TypeScript implementation of that contract.
+Graphs, the native scheduler, WASM, and the ICP canister remain optional
+workers that can execute an envelope. They are not the front door. Provider
+SDKs, storage backends, and `@knolo/core` implementations stay outside this
+workspace.
 
 | Artifact | Role | Published |
 | --- | --- | --- |
@@ -16,41 +18,68 @@ implementations stay outside this workspace.
 | `knolo-agent` | Native scheduler, policy, packs, host effects | crates.io (workspace version) |
 | `knolo-agent-wasm` | Browser/JSON WASM protocol adapter | workspace-only |
 | `knolo-agent-icp` | Internet Computer canister host | workspace-only |
-| `@knolo/agents` | TypeScript builders, engines, ICP client | npm (`0.3.0`) |
+| `@knolo/agents` | TypeScript builders, engines, ICP client | npm (`0.4.0`) |
 
-Current published versions: `@knolo/agents` **0.3.0**, `knolo-agent` / `knolo-agent-core` **0.2.2**. Early release; APIs may evolve before 1.0. Artifacts version independently.
+Versions in this release: `@knolo/agents` **0.4.0**, `knolo-agent` / `knolo-agent-core` **0.3.0**. APIs may evolve before 1.0. Artifacts version independently. `knolo-agent-wasm` and `knolo-agent-icp` share the crate version and stay unpublished.
 
 ---
 
 ## Table of contents
 
-1. [Why it is different](#why-it-is-different)
-2. [Architecture](#architecture)
-3. [Core concepts](#core-concepts)
-4. [Agents in depth](#agents-in-depth)
-5. [Packs and least authority](#packs-and-least-authority)
-6. [Policy, tools, and host effects](#policy-tools-and-host-effects)
-7. [Checkpoints, resume, and HITL](#checkpoints-resume-and-hitl)
-8. [Replay](#replay)
-9. [Retrieval, Cortex, and ClaimGraph](#retrieval-cortex-and-claimgraph)
-10. [Multi-agent handoffs](#multi-agent-handoffs)
-11. [TypeScript SDK (`@knolo/agents`)](#typescript-sdk-knoloagents)
-12. [Rust crates](#rust-crates)
-13. [WASM and ICP](#wasm-and-icp)
-14. [Quickstart](#quickstart)
-15. [Examples](#examples)
-16. [Repository layout](#repository-layout)
-17. [Development](#development)
-18. [Security and compatibility](#security-and-compatibility)
-19. [Documentation index](#documentation-index)
-20. [Status and limitations](#status-and-limitations)
-21. [License](#license)
+1. [Knolo Spawn](#knolo-spawn)
+2. [Why it is different](#why-it-is-different)
+3. [Architecture](#architecture)
+4. [Core concepts](#core-concepts)
+5. [Agents in depth](#agents-in-depth)
+6. [Packs and least authority](#packs-and-least-authority)
+7. [Policy, tools, and host effects](#policy-tools-and-host-effects)
+8. [Checkpoints, resume, and HITL](#checkpoints-resume-and-hitl)
+9. [Replay](#replay)
+10. [Retrieval, Cortex, and ClaimGraph](#retrieval-cortex-and-claimgraph)
+11. [Multi-agent handoffs](#multi-agent-handoffs)
+12. [TypeScript SDK (`@knolo/agents`)](#typescript-sdk-knoloagents)
+13. [Rust crates](#rust-crates)
+14. [WASM and ICP](#wasm-and-icp)
+15. [Quickstart](#quickstart)
+16. [Examples](#examples)
+17. [Repository layout](#repository-layout)
+18. [Development](#development)
+19. [Security and compatibility](#security-and-compatibility)
+20. [Documentation index](#documentation-index)
+21. [Status and limitations](#status-and-limitations)
+22. [License](#license)
 
 ---
 
+## Knolo Spawn
+
+```ts
+import { closeSpawn, issueSpawn } from "@knolo/agents";
+
+const issued = await issueSpawn({
+  parent: { version: 1, id: "parent", level: "L1" },
+  task,
+  authority, // parent ceiling: capabilities, tools, namespaces, maxSteps, maxCostMicros
+  pack,      // pack ceiling; the issued authority is the intersection
+  evidence,
+  skills,
+});
+
+// The parent, or any worker it chooses, runs issued.context.
+// Knolo does not call the model.
+const receipt = await closeSpawn(issued.envelope, workerOutput, { toolCalls });
+```
+
+The same two steps are MCP tools on `knoloMcpBridge()`: `knolo.spawn` and
+`knolo.close`. The Grok Build example is the reference parent:
+[`examples/adapters/grok-build/`](examples/adapters/grok-build/).
+
+Claim limits, the envelope fields, and the receipt rule are in
+[docs/spawn.md](docs/spawn.md).
+
 ## Why it is different
 
-Knolo Agents is not an all-in-one prompt, chain, or provider integration layer.
+Knolo Spawn is not an all-in-one prompt, chain, or provider integration layer.
 Compared with LangChain-style frameworks, more of the execution contract lives
 in **explicit data structures** and less in dynamically assembled application
 code:
@@ -75,29 +104,27 @@ layer.
 
 ```
 ┌──────────────────────────────────────────────────────────────────┐
-│  Application / host (credentials, tools, storage, @knolo/core)  │
+│  Parent agent (model, tools, credentials)                        │
 └────────────────────────────┬─────────────────────────────────────┘
-                             │ injects effects & capabilities
+                             │ issueSpawn / closeSpawn
 ┌────────────────────────────▼─────────────────────────────────────┐
-│  @knolo/agents  │  knolo-agent  │  knolo-agent-icp  │  wasm     │
-│  builders +     │  native       │  ICP canister      │  JSON     │
-│  TS/WASM engine │  scheduler    │  host runtime     │  adapter  │
-└────────────────────────────┬─────────────────────────────────────┘
-                             │ shared contracts
-┌────────────────────────────▼─────────────────────────────────────┐
-│                     knolo-agent-core                             │
-│  graphs · state · events · packs · policy · HITL · handoffs      │
-│  checkpoints · replay · tools · retrieval · redaction            │
-└──────────────────────────────────────────────────────────────────┘
+│  Knolo Spawn                                                     │
+│  envelope · narrowed authority · context hash · receipt          │
+└───────────────┬──────────────────────────────┬───────────────────┘
+                │ optional worker              │ knowledge
+┌───────────────▼──────────────┐  ┌────────────▼───────────────────┐
+│  graph · Rust scheduler      │  │  host effects · @knolo/core    │
+│  WASM · ICP canister         │  │  credentials stay on the host  │
+└──────────────────────────────┘  └────────────────────────────────┘
 ```
 
 | Layer | Responsibility |
 | --- | --- |
-| `knolo-agent-core` | Portable contracts, graph/state validation, policy types, events, replay, checkpoints, pack declarations, handoffs, HITL. |
+| `knolo-agent-core` | Portable contracts, including spawn envelopes and receipts, graph/state validation, policy types, events, replay, checkpoints, pack declarations, handoffs, HITL. |
 | `knolo-agent` | Native Rust scheduler, host effect boundaries, policy enforcement, pack loading, Cortex/ClaimGraph injection, durable runtime integrations. |
 | `knolo-agent-wasm` | Small versioned JSON/WASM protocol adapter for embedding portable contracts. Not a full host. |
 | `knolo-agent-icp` | ICP canister host for the control plane (Phases 0–4: deterministic runtime, host effects, stable structures, handoff, DX). |
-| `@knolo/agents` | Typed TypeScript builders, deterministic state/routing/suspension engine, explicit WASM integration, ICP client. |
+| `@knolo/agents` | `issueSpawn` / `closeSpawn`, MCP `knolo.spawn` and `knolo.close`, typed builders, deterministic state/routing/suspension engine, explicit WASM integration, ICP client. |
 | `@knolo/core` | Separate peer dependency owned by the consumer; can provide Cortex and ClaimGraph implementations. **Never vendored here.** |
 
 The repository does not vendor `@knolo/core`, credentials, retrieval storage, or
@@ -393,7 +420,9 @@ See [docs/core-boundary.md](https://github.com/HiveForensics-AI/Knolo-Agents/blo
 
 ## Multi-agent handoffs
 
-Subgraph delegation uses `HandoffEnvelopeV1`:
+Subgraph delegation uses `HandoffEnvelopeV1`. This is a worker mechanism for a
+graph or an ICP canister. The parent-facing contract is a spawn envelope.
+See [docs/spawn.md](docs/spawn.md).
 
 - `destination` — child graph id
 - `state_projection` — map of child JSON pointers → parent pointers
@@ -421,7 +450,9 @@ pnpm add @knolo/core
 
 Requires **Node 20+**. Package manager in this monorepo: **pnpm 9.15**.
 
-### Define and run an agent
+### Optional deterministic worker
+
+Graph builders are for a worker that executes inside a spawn. They are not the adoption path.
 
 ```ts
 import {
@@ -467,6 +498,7 @@ console.log(report.status); // { type: "terminated", result: 1 }
 
 | Module | Exports (high level) |
 | --- | --- |
+| `harness` | `issueSpawn`, `closeSpawn`, `handoffFromSpawn`, `verifySpawnEnvelope`, `createHarness` |
 | `builder` | `stateSchema`, `node`, `terminal`, `transition`, `entry`, `limits`, `defineAgent`, `compile`, `fromPack` |
 | `agent` | `Agent.load`, `run`, `stream`, `resume`, `replay`, `replayDeterministic`, `inspect` |
 | `engine` | TypeScript engine; WASM engine + `WasmProtocolAdapter` |
@@ -611,11 +643,20 @@ cargo run -p knolo-agent --example complete
 `pack_e2e` loads a native pack fixture, proves an allowed and denied tool call,
 and checks deterministic control-plane replay.
 
-### TypeScript
+### Spawn
 
 ```bash
 corepack enable
 pnpm install --frozen-lockfile
+pnpm --filter @knolo/agents build
+node examples/adapters/grok-build/run.mjs
+```
+
+That run issues a spawn, answers from a recorded Grok Build turn, and closes the receipt. It does not call the network.
+
+### TypeScript
+
+```bash
 pnpm --filter @knolo/agents check
 pnpm --filter @knolo/agents test
 ```
@@ -637,7 +678,8 @@ cd examples/icp-agent-canister && bash scripts/run-handoff.sh
 
 | Path | Description |
 | --- | --- |
-| [crates/knolo-agent/examples/pack_e2e.rs](https://github.com/HiveForensics-AI/Knolo-Agents/blob/main/crates/knolo-agent/examples/pack_e2e.rs) | Pack → policy → allowed/denied tool → replay |
+| [examples/adapters/grok-build/](https://github.com/HiveForensics-AI/Knolo-Agents/tree/main/examples/adapters/grok-build/) | Parent agent: issue a spawn, answer from the brief, close the receipt |
+| [crates/knolo-agent/examples/pack_e2e.rs](https://github.com/HiveForensics-AI/Knolo-Agents/blob/main/crates/knolo-agent/examples/pack_e2e.rs) | Optional worker: pack → policy → allowed/denied tool → replay |
 | [crates/knolo-agent/examples/complete.rs](https://github.com/HiveForensics-AI/Knolo-Agents/blob/main/crates/knolo-agent/examples/complete.rs) | Cortex, ClaimGraph, handoff, replay request shapes |
 | [examples/typescript/complete.ts](https://github.com/HiveForensics-AI/Knolo-Agents/blob/main/examples/typescript/complete.ts) | Full TS walkthrough: graph, tools, retrieval, HITL, WASM inspect |
 | [examples/packs/](https://github.com/HiveForensics-AI/Knolo-Agents/tree/main/examples/packs/) | Scenario packs (minimal grants per scenario) |
@@ -664,7 +706,8 @@ More context: [examples/README.md](https://github.com/HiveForensics-AI/Knolo-Age
 │   └── fixtures/             # Conformance / policy / execution fixtures
 ├── examples/
 │   ├── packs/                # .knolo authority declarations
-│   ├── typescript/           # TS end-to-end sample
+│   ├── adapters/             # Parent-agent spawn examples
+│   ├── typescript/           # Optional deterministic worker sample
 │   └── icp-agent-canister/   # dfx project + fixtures + scripts
 ├── docs/                     # Architecture and subsystem docs
 ├── scripts/
@@ -745,6 +788,7 @@ See [docs/compatibility.md](https://github.com/HiveForensics-AI/Knolo-Agents/blo
 
 | Topic | Document |
 | --- | --- |
+| Knolo Spawn | [docs/spawn.md](https://github.com/HiveForensics-AI/Knolo-Agents/blob/main/docs/spawn.md) |
 | Docs home | [docs/README.md](https://github.com/HiveForensics-AI/Knolo-Agents/blob/main/docs/README.md) |
 | Architecture overview | [docs/architecture/README.md](https://github.com/HiveForensics-AI/Knolo-Agents/blob/main/docs/architecture/README.md) |
 | State transactions | [docs/architecture/state-transactions.md](https://github.com/HiveForensics-AI/Knolo-Agents/blob/main/docs/architecture/state-transactions.md) |
@@ -765,10 +809,11 @@ See [docs/compatibility.md](https://github.com/HiveForensics-AI/Knolo-Agents/blo
 
 ## Status and limitations
 
-The project is an early **0.1.x** release.
+This tree cuts `@knolo/agents` **0.4.0** and `knolo-agent` / `knolo-agent-core` **0.3.0**. APIs may evolve before 1.0.
 
 **Solid today**
 
+- Knolo Spawn envelopes and receipts (`issueSpawn`, `closeSpawn`, Rust validation, `knolo.spawn` / `knolo.close`)
 - Rust authoritative runtime with pack-constrained policy
 - Ordered events, graph hashing, checkpoint artifact binding
 - TypeScript portable engine (state, routing, suspension) with explicit engines

@@ -1,0 +1,39 @@
+{
+  "version": 1,
+  "envelopeRoot": "spawn:b8d531d3040e3be66b240f7a6da499b57fd89b841fca78d2d6724ae2696938c4",
+  "outputRoot": "output:3fb74b34b454e57531ab8d95d7cca866bb47a1f1bd3fcbe4d4fd7a87d8cba943",
+  "evaluation": {
+    "status": "succeeded",
+    "successCriteriaMatched": [
+      "identify suspicious transactions",
+      "cite supporting evidence",
+      "do not perform irreversible actions"
+    ],
+    "prohibitedViolations": [],
+    "passed": true,
+    "checks": [
+      {
+        "phase": "contract",
+        "id": "policy",
+        "passed": true,
+        "detail": "ok"
+      },
+      {
+        "phase": "task",
+        "id": "successCriteria",
+        "passed": true,
+        "detail": "3/3"
+      }
+    ],
+    "judge": null
+  },
+  "skillSelectionReceipt": "skill-selection:4ada994e68de6f801f7f387ef8364dfbad1295bc6bf41c45559c8bc0a32827e0",
+  "evidenceReceipts": [
+    "context-selection:9ae7d2102ee5baac66ac954a26dc90711a401ff8ffbd892652c28ccfee01d038"
+  ],
+  "knowledgeStateRoots": [
+    "ledger-pack"
+  ],
+  "finalStatus": "succeeded",
+  "output": "identify suspicious transactions and cite supporting evidence; do not perform irreversible actions"
+}
