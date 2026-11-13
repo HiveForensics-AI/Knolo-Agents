@@ -9,21 +9,39 @@ Tags are `knolo-agent-vX.Y.Z`, `knolo-agent-core-vX.Y.Z`, and `agents-vX.Y.Z`.
 The WASM adapter currently ships from the workspace and is validated, not separately
 published by the release workflow.
 
-## Publish `@knolo/agents` 0.3.0
+## Publish Knolo Spawn
 
-Do **not** republish the Rust crates for this line. They stay `0.2.2` on
-crates.io.
+This release publishes three artifacts from `main`, in order:
 
-1. Commit the 0.3.0 tree with a clean `git status` (CI fails on a dirty worktree).
-2. Push the branch and merge to the branch you publish from (`main` once the
-   harness work lands, or this feature branch if you are publishing from it).
-3. In GitHub Actions, run **Release** (`workflow_dispatch`) with:
-   - **artifact:** `agents`
-   - **version:** `0.3.0`
-4. After npm succeeds, tag `agents-v0.3.0` on the published commit if the
-   workflow did not create it.
+| Artifact | Version | Tag |
+| --- | --- | --- |
+| `knolo-agent-core` | 0.3.0 | `knolo-agent-core-v0.3.0` |
+| `knolo-agent` | 0.3.0 | `knolo-agent-v0.3.0` |
+| `@knolo/agents` | 0.4.0 | `agents-v0.4.0` |
 
-Local dry-run before dispatch:
+`knolo-agent-wasm` and `knolo-agent-icp` share the workspace crate version and
+stay unpublished (`publish = false`).
+
+`knolo-agent` re-exports `knolo-agent-core`. Publish core and wait until
+`0.3.0` is on the crates.io index before publishing `knolo-agent`. The release
+workflow checks out the default branch. It does not create git tags, and the
+crate path does not compare the version input with `Cargo.toml`.
+
+1. Commit the version bump on the feature branch with a clean `git status`
+   (CI fails on a dirty worktree).
+2. Merge to `main`. Dispatch Release only after that merge.
+3. In GitHub Actions, run **Release** (`workflow_dispatch`) three times:
+   1. **artifact:** `knolo-agent-core`, **version:** `0.3.0`. Wait until
+      crates.io shows `knolo-agent-core` 0.3.0.
+   2. **artifact:** `knolo-agent`, **version:** `0.3.0`.
+   3. **artifact:** `agents`, **version:** `0.4.0`.
+4. Tag the published commit: `knolo-agent-core-v0.3.0`, `knolo-agent-v0.3.0`,
+   and `agents-v0.4.0`.
+
+`cargo publish -p knolo-agent` fails until `knolo-agent-core` 0.3.0 is on the
+index. The workflow has no wait between those two runs.
+
+Local dry-run before merge:
 
 ```bash
 ./scripts/hygiene.sh
@@ -31,6 +49,8 @@ node scripts/check-links.mjs
 node scripts/check-packs.mjs
 pnpm install --frozen-lockfile
 pnpm --filter @knolo/agents test
-test "$(node -p "require('./packages/agents/package.json').version")" = "0.3.0"
+test "$(node -p "require('./packages/agents/package.json').version")" = "0.4.0"
 cd packages/agents && npm pack --dry-run
+cargo package -p knolo-agent-core --list
+cargo package -p knolo-agent --list
 ```

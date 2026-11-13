@@ -18,9 +18,9 @@ workspace.
 | `knolo-agent` | Native scheduler, policy, packs, host effects | crates.io (workspace version) |
 | `knolo-agent-wasm` | Browser/JSON WASM protocol adapter | workspace-only |
 | `knolo-agent-icp` | Internet Computer canister host | workspace-only |
-| `@knolo/agents` | TypeScript builders, engines, ICP client | npm (`0.3.0`) |
+| `@knolo/agents` | TypeScript builders, engines, ICP client | npm (`0.4.0`) |
 
-Current published versions: `@knolo/agents` **0.3.0**, `knolo-agent` / `knolo-agent-core` **0.2.2**. Early release; APIs may evolve before 1.0. Artifacts version independently.
+Versions in this release: `@knolo/agents` **0.4.0**, `knolo-agent` / `knolo-agent-core` **0.3.0**. APIs may evolve before 1.0. Artifacts version independently. `knolo-agent-wasm` and `knolo-agent-icp` share the crate version and stay unpublished.
 
 ---
 
@@ -809,7 +809,7 @@ See [docs/compatibility.md](https://github.com/HiveForensics-AI/Knolo-Agents/blo
 
 ## Status and limitations
 
-The project is an early **0.1.x** release.
+This tree cuts `@knolo/agents` **0.4.0** and `knolo-agent` / `knolo-agent-core` **0.3.0**. APIs may evolve before 1.0.
 
 **Solid today**
 

@@ -89,6 +89,6 @@ pnpm --filter @knolo/agents test
 
 ## Status and license
 
-This is the `0.3.0` release of the TypeScript surface; APIs may evolve before
+This is the `0.4.0` release of the TypeScript surface; APIs may evolve before
 1.0. The optional `@knolo/core` peer is `^5.5.0`. The package is licensed under
 Apache License 2.0. See [LICENSE](LICENSE).
